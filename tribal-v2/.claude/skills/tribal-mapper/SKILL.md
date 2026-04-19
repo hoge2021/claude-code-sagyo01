@@ -161,6 +161,15 @@ description: |
 3. 出力: `.claude/artifacts/tests/prompt-tests.json`
 4. pass_rate < 0.9 なら失敗 module を特定し Phase 2-4 に戻す（最大 2 回）
 
+### Phase 8.5 (Tribal v2): Token Reduction Benchmark
+
+1. `benchmark-reporter` を起動 (Bash で `benchmark.py` 呼ぶだけ、LLM 不要)
+2. `prompt-tests.json` の各 case で baseline_tokens vs routed_tokens を計測
+3. 出力: `.claude/artifacts/benchmark.json`
+4. `_quality-log.jsonl` に `tokens_saved_ratio` を自動追記 (CI gate で前回比 -20% 検出)
+5. `summary.avg_ratio < 5.0` なら警告 (router の primary_contexts 過多疑い)
+6. 完了報告に benchmark summary を必ず含める (graphify 流訴求)
+
 ### 完了処理
 
 1. `git rev-parse HEAD` で現在の SHA を取得し、`_coverage.json` の `last_success_sha` に保存

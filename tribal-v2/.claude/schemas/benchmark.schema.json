@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Token Reduction Benchmark (Tribal v2 Phase 5)",
+  "type": "object",
+  "required": ["executed_at", "per_case", "summary"],
+  "properties": {
+    "executed_at": {"type": "string", "format": "date-time"},
+    "router_version_hash": {"type": "string"},
+    "per_case": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["case_id", "intent", "baseline_tokens", "routed_tokens"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "intent": {"type": "string"},
+          "query": {"type": "string"},
+          "routed_files": {"type": "array", "items": {"type": "string"}},
+          "baseline_tokens": {"type": "integer", "minimum": 0},
+          "routed_tokens": {"type": "integer", "minimum": 0},
+          "ratio": {"type": ["number", "null"], "minimum": 0},
+          "source": {"type": "string", "enum": ["dry-run-sample", "prompt-tester"]}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_cases", "baseline_tokens"],
+      "properties": {
+        "total_cases": {"type": "integer", "minimum": 0},
+        "baseline_tokens": {"type": "integer", "minimum": 0},
+        "avg_routed_tokens": {"type": "number"},
+        "avg_ratio": {"type": ["number", "null"]},
+        "median_ratio": {"type": ["number", "null"]},
+        "min_ratio": {"type": ["number", "null"]},
+        "max_ratio": {"type": ["number", "null"]},
+        "p95_ratio": {"type": ["number", "null"]}
+      }
+    }
+  }
+}

@@ -137,6 +137,32 @@ jobs:
             --per-file-threshold 0.5 \
             --min-absolute 3.5
 
+      - name: Tribal v2 — Token reduction benchmark
+        run: |
+          # Benchmark uses prompt-tests.json from Phase 8 if available, else dry-run.
+          if [ -f .claude/artifacts/tests/prompt-tests.json ]; then
+            python3 .claude/scripts/benchmark.py \
+              --prompt-tests .claude/artifacts/tests/prompt-tests.json \
+              --context-dir .claude/context \
+              --routing-table .claude/context/_routing-table.json \
+              --output .claude/artifacts/benchmark.json
+          else
+            echo "prompt-tests.json missing, running benchmark in dry-run mode"
+            python3 .claude/scripts/benchmark.py --dry-run \
+              --context-dir .claude/context \
+              --routing-table .claude/context/_routing-table.json \
+              --output .claude/artifacts/benchmark.json
+          fi
+          # Surface benchmark summary in CI log
+          python3 -c "
+          import json
+          d = json.load(open('.claude/artifacts/benchmark.json'))
+          s = d['summary']
+          print(f\"Token reduction: avg {s['avg_ratio']}x, median {s['median_ratio']}x, min {s['min_ratio']}x\")
+          if s['avg_ratio'] is not None and s['avg_ratio'] < 5.0:
+              print(f'WARNING: avg_ratio {s[\"avg_ratio\"]} < 5.0 (router 効果が薄い可能性)')
+          "
+
       - name: Prune old artifacts (D6 retention)
         run: |
           # Keep only the latest analyst/critic JSON; tests are kept as-is for trend
