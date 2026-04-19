@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-04-19T00:00:00Z",
+  "generator": "baseline-simulation (Phase 1, repo-explorer simulation)",
+  "note": "graphify/ は単一フラット package だが ARCHITECTURE.md の責務分割に従い 18 conceptual module として認識。ファイル単位だが repo-explorer の rule 2/3/5 を満たすため module 候補として扱う。",
+  "repos": [
+    {
+      "root": "graphify",
+      "languages": ["python"],
+      "modules": [
+        {"id": "graphify/detect", "path": "graphify/detect.py", "context_file": ".claude/context/graphify__detect.md", "kind": "library", "entrypoints": ["detect", "classify_file", "collect_files"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/extract", "path": "graphify/extract.py", "context_file": ".claude/context/graphify__extract.md", "kind": "library", "entrypoints": ["extract", "collect_files"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/build", "path": "graphify/build.py", "context_file": ".claude/context/graphify__build.md", "kind": "library", "entrypoints": ["build", "build_from_json"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/cluster", "path": "graphify/cluster.py", "context_file": ".claude/context/graphify__cluster.md", "kind": "library", "entrypoints": ["cluster", "cohesion_score", "score_all"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/analyze", "path": "graphify/analyze.py", "context_file": ".claude/context/graphify__analyze.md", "kind": "library", "entrypoints": ["god_nodes", "surprising_connections", "suggest_questions", "graph_diff"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/report", "path": "graphify/report.py", "context_file": ".claude/context/graphify__report.md", "kind": "library", "entrypoints": ["generate", "render_report"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/export", "path": "graphify/export.py", "context_file": ".claude/context/graphify__export.md", "kind": "library", "entrypoints": ["to_json", "to_html", "to_obsidian", "to_canvas", "to_svg", "to_graphml", "to_cypher", "push_to_neo4j"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/ingest", "path": "graphify/ingest.py", "context_file": ".claude/context/graphify__ingest.md", "kind": "library", "entrypoints": ["ingest"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/cache", "path": "graphify/cache.py", "context_file": ".claude/context/graphify__cache.md", "kind": "library", "entrypoints": ["file_hash", "load_cached", "save_cached", "check_semantic_cache", "save_semantic_cache"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/security", "path": "graphify/security.py", "context_file": ".claude/context/graphify__security.md", "kind": "validation", "entrypoints": ["validate_url", "safe_fetch", "safe_fetch_text", "validate_graph_path", "sanitize_label"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/validate", "path": "graphify/validate.py", "context_file": ".claude/context/graphify__validate.md", "kind": "validation", "entrypoints": ["validate_extraction"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/serve", "path": "graphify/serve.py", "context_file": ".claude/context/graphify__serve.md", "kind": "service", "entrypoints": ["start_server", "_load_graph"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/watch", "path": "graphify/watch.py", "context_file": ".claude/context/graphify__watch.md", "kind": "service", "entrypoints": ["watch", "_rebuild_code"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/benchmark", "path": "graphify/benchmark.py", "context_file": ".claude/context/graphify__benchmark.md", "kind": "library", "entrypoints": ["run_benchmark", "print_benchmark"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/hooks", "path": "graphify/hooks.py", "context_file": ".claude/context/graphify__hooks.md", "kind": "automation", "entrypoints": ["install", "uninstall", "status"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/wiki", "path": "graphify/wiki.py", "context_file": ".claude/context/graphify__wiki.md", "kind": "library", "entrypoints": ["to_wiki"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/transcribe", "path": "graphify/transcribe.py", "context_file": ".claude/context/graphify__transcribe.md", "kind": "library", "entrypoints": ["transcribe_all"], "file_count": 1, "primary_language": "python"},
+        {"id": "graphify/cli", "path": "graphify/__main__.py", "context_file": ".claude/context/graphify__cli.md", "kind": "config", "entrypoints": ["main", "_install_skill", "_PLATFORM_CONFIG"], "file_count": 1, "primary_language": "python"}
+      ]
+    }
+  ],
+  "excluded": [
+    {"path": "graphify/__init__.py", "reason": "28 lines, exports only, no module-level logic"},
+    {"path": "graphify/manifest.py", "reason": "4 lines, package-data manifest"},
+    {"path": "tests/", "reason": "test fixtures directory"},
+    {"path": "graphify/skill*.md", "reason": "skill markdown documents, not source"}
+  ],
+  "stats": {
+    "total_modules": 18,
+    "total_files_in_modules": 18,
+    "total_loc": 9156
+  }
+}

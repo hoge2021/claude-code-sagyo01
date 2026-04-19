@@ -1,0 +1,308 @@
+{
+  "generated_at": "2026-04-19T00:38:17.192325+00:00",
+  "nodes": [
+    {
+      "id": "graphify/detect",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__detect.md"
+    },
+    {
+      "id": "graphify/extract",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__extract.md"
+    },
+    {
+      "id": "graphify/build",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__build.md"
+    },
+    {
+      "id": "graphify/cluster",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__cluster.md"
+    },
+    {
+      "id": "graphify/analyze",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__analyze.md"
+    },
+    {
+      "id": "graphify/report",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__report.md"
+    },
+    {
+      "id": "graphify/export",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__export.md"
+    },
+    {
+      "id": "graphify/ingest",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__ingest.md"
+    },
+    {
+      "id": "graphify/cache",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__cache.md"
+    },
+    {
+      "id": "graphify/security",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__security.md"
+    },
+    {
+      "id": "graphify/validate",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__validate.md"
+    },
+    {
+      "id": "graphify/serve",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__serve.md"
+    },
+    {
+      "id": "graphify/watch",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__watch.md"
+    },
+    {
+      "id": "graphify/benchmark",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__benchmark.md"
+    },
+    {
+      "id": "graphify/hooks",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__hooks.md"
+    },
+    {
+      "id": "graphify/wiki",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__wiki.md"
+    },
+    {
+      "id": "graphify/transcribe",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__transcribe.md"
+    },
+    {
+      "id": "graphify/cli",
+      "repo": "graphify",
+      "lang": "python",
+      "context_file": ".claude/context/graphify__cli.md"
+    }
+  ],
+  "edges": [
+    {
+      "from": "graphify/extract",
+      "to": "graphify/detect",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/extract.py: from .detect import"
+    },
+    {
+      "from": "graphify/extract",
+      "to": "graphify/cache",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/extract.py: from .cache import"
+    },
+    {
+      "from": "graphify/build",
+      "to": "graphify/validate",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/build.py: from .validate import"
+    },
+    {
+      "from": "graphify/analyze",
+      "to": "graphify/detect",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/analyze.py: from .detect import"
+    },
+    {
+      "from": "graphify/analyze",
+      "to": "graphify/cluster",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/analyze.py: from .cluster import"
+    },
+    {
+      "from": "graphify/report",
+      "to": "graphify/analyze",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/report.py: from .analyze import"
+    },
+    {
+      "from": "graphify/export",
+      "to": "graphify/analyze",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/export.py: from .analyze import"
+    },
+    {
+      "from": "graphify/export",
+      "to": "graphify/security",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/export.py: from .security import"
+    },
+    {
+      "from": "graphify/ingest",
+      "to": "graphify/security",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/ingest.py: from .security import"
+    },
+    {
+      "from": "graphify/ingest",
+      "to": "graphify/transcribe",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/ingest.py: from .transcribe import"
+    },
+    {
+      "from": "graphify/serve",
+      "to": "graphify/analyze",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/serve.py: from .analyze import"
+    },
+    {
+      "from": "graphify/serve",
+      "to": "graphify/security",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/serve.py: from .security import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/detect",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .detect import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/extract",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .extract import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/build",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .build import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/cluster",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .cluster import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/analyze",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .analyze import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/report",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .report import"
+    },
+    {
+      "from": "graphify/watch",
+      "to": "graphify/export",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/watch.py: from .export import"
+    },
+    {
+      "from": "graphify/hooks",
+      "to": "graphify/watch",
+      "kind": "import",
+      "fragility": "API \u5909\u66f4\u3067\u58ca\u308c\u308b",
+      "evidence": "graphify/hooks.py: from .watch import"
+    }
+  ],
+  "ripple_index": {
+    "graphify/detect": [
+      "graphify/extract",
+      "graphify/analyze",
+      "graphify/watch"
+    ],
+    "graphify/extract": [
+      "graphify/watch"
+    ],
+    "graphify/build": [
+      "graphify/watch"
+    ],
+    "graphify/cluster": [
+      "graphify/analyze",
+      "graphify/watch"
+    ],
+    "graphify/analyze": [
+      "graphify/report",
+      "graphify/export",
+      "graphify/serve",
+      "graphify/watch"
+    ],
+    "graphify/report": [
+      "graphify/watch"
+    ],
+    "graphify/export": [
+      "graphify/watch"
+    ],
+    "graphify/cache": [
+      "graphify/extract"
+    ],
+    "graphify/security": [
+      "graphify/export",
+      "graphify/ingest",
+      "graphify/serve"
+    ],
+    "graphify/validate": [
+      "graphify/build"
+    ],
+    "graphify/watch": [
+      "graphify/hooks"
+    ],
+    "graphify/transcribe": [
+      "graphify/ingest"
+    ]
+  },
+  "stats": {
+    "node_count": 18,
+    "edge_count": 20,
+    "avg_ripple_size": 1.11,
+    "max_ripple_size": 4,
+    "max_ripple_module": "graphify/analyze"
+  }
+}

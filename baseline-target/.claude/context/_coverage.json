@@ -1,0 +1,102 @@
+{
+  "generated_at": "2026-04-19T00:38:17.192325+00:00",
+  "last_success_sha": null,
+  "total_modules": 18,
+  "covered_modules": 0,
+  "coverage_ratio": 0.0,
+  "missing_modules": [
+    {
+      "module": "graphify/detect",
+      "expected_context": ".claude/context/graphify__detect.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/extract",
+      "expected_context": ".claude/context/graphify__extract.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/build",
+      "expected_context": ".claude/context/graphify__build.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/cluster",
+      "expected_context": ".claude/context/graphify__cluster.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/analyze",
+      "expected_context": ".claude/context/graphify__analyze.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/report",
+      "expected_context": ".claude/context/graphify__report.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/export",
+      "expected_context": ".claude/context/graphify__export.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/ingest",
+      "expected_context": ".claude/context/graphify__ingest.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/cache",
+      "expected_context": ".claude/context/graphify__cache.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/security",
+      "expected_context": ".claude/context/graphify__security.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/validate",
+      "expected_context": ".claude/context/graphify__validate.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/serve",
+      "expected_context": ".claude/context/graphify__serve.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/watch",
+      "expected_context": ".claude/context/graphify__watch.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/benchmark",
+      "expected_context": ".claude/context/graphify__benchmark.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/hooks",
+      "expected_context": ".claude/context/graphify__hooks.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/wiki",
+      "expected_context": ".claude/context/graphify__wiki.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/transcribe",
+      "expected_context": ".claude/context/graphify__transcribe.md",
+      "reason": "missing"
+    },
+    {
+      "module": "graphify/cli",
+      "expected_context": ".claude/context/graphify__cli.md",
+      "reason": "missing"
+    }
+  ],
+  "orphan_contexts": [],
+  "stale_modules": [],
+  "invalid_contexts": []
+}
