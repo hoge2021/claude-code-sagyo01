@@ -26,7 +26,13 @@ QUALITY_LOG = Path(".claude/context/_quality-log.jsonl")
 
 
 def parse_log(text: str) -> dict[str, float]:
-    """Return {file: latest_overall_score} from a JSONL log."""
+    """Return {file: latest_score} from a JSONL log.
+
+    Tribal v2: prefer `weighted_overall` over `overall` when available
+    (weighted_overall reflects path_accuracy / non_obvious_value 2x weighting,
+    which is the actual gating decision from critic).
+    Falls back to `overall` for v1 entries.
+    """
     latest: dict[str, tuple[str, float]] = {}
     for line in text.splitlines():
         line = line.strip()
@@ -38,7 +44,10 @@ def parse_log(text: str) -> dict[str, float]:
             continue
         f = row.get("file") or row.get("module")
         ts = row.get("timestamp", "")
-        score = row.get("overall")
+        # v2 preference: weighted_overall > overall (fallback for v1)
+        score = row.get("weighted_overall")
+        if score is None:
+            score = row.get("overall")
         if f is None or score is None:
             continue
         if f not in latest or ts > latest[f][0]:

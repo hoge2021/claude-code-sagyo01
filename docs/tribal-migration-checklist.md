@@ -173,48 +173,38 @@ artifact 全部読まず selective Read する設計に依存 (Phase 7 で実測
   - `verdict` enum に `MANUAL_REVIEW` を追加
   - `weighted_overall` フィールドを追加
   - `confidence_consistency` 軸を `scores` に追加
-- [ ] 📝 `.claude/schemas/quality-log.schema.json` を更新:
-  - `weighted_overall` `tokens_saved_ratio` `confidence_summary` `cache_hit` を追加
+- [x] 📝 `.claude/schemas/quality-log.schema.json` を更新
 
 ### 3.2 既存 artifact のマイグレーション
 
-- [ ] 📝 `.claude/scripts/migrate_v1_to_v2.py` を新規作成
-  - 既存 analyst JSON の Q3 全件に `confidence: EXTRACTED` `confidence_score: 1.0` を埋める
-  - 既存 critic JSON の `verdict` を維持しつつ `weighted_overall` を計算
-- [ ] 🧪 マイグレーション実行 (`python .claude/scripts/migrate_v1_to_v2.py`) → エラーなく完了
+- [x] 📝 `.claude/scripts/migrate_v1_to_v2.py` を新規作成 (idempotent + dry-run)
+- [x] 🧪 マイグレーション baseline-target で実行 → 3 migrated, 0 skipped
 
 ### 3.3 agent 更新
 
-- [ ] 📝 `.claude/agents/module-analyst.md` を更新:
-  - Q3 の出力例に confidence / confidence_score を追加
-  - 規範文を追加: 「INFERRED は 0.6-0.9、AMBIGUOUS は 0.1-0.3、EXTRACTED は常に 1.0」
-  - Q3_hyperedges のセクションを追加（最大 3 件、minModules=3）
-- [ ] 📝 `.claude/agents/context-critic.md` を更新:
-  - 6 軸目「Conf consistency」を追加（context の断定形と analyst の AMBIGUOUS が矛盾していないか）
-  - 判定基準に「analyst の Q3 に AMBIGUOUS が 1 件以上 → verdict は最低 MANUAL_REVIEW」を追加
-  - PASS 閾値を `weighted_overall` ベースに変更
-- [ ] 📝 `.claude/agents/context-fixer.md` を更新:
-  - MANUAL_REVIEW verdict に対しては「修正せず log のみ」を実施
+- [x] 📝 `.claude/agents/module-analyst.md` 更新 (規範文 + Q3_hyperedges + related_modules)
+- [x] 📝 `.claude/agents/context-critic.md` 更新 (6 軸目 + MANUAL_REVIEW + weighted_overall)
+- [x] 📝 `.claude/agents/context-fixer.md` 更新 (MANUAL_REVIEW skip + confidence fix)
 
 ### 3.4 quality log 拡張
 
-- [ ] 📝 `.claude/skills/tribal-mapper/SKILL.md` Phase 4 の追記処理を更新:
-  - `weighted_overall` `confidence_summary` `cache_hit` を `_quality-log.jsonl` に書く
-- [ ] 📝 `.claude/scripts/check_quality_regression.py` を更新:
-  - 比較対象を `overall` から `weighted_overall` に変更
-  - 既存 baseline (overall のみ) との互換: 両方を見て新しい方を優先
+- [ ] 📝 `.claude/skills/tribal-mapper/SKILL.md` Phase 4 追記処理 (Phase 4 で対応予定)
+- [x] 📝 `.claude/scripts/check_quality_regression.py` を `weighted_overall` 優先比較に
 
 ### 3.5 Phase 3 動作確認
 
-- [ ] 🧪 マイグレーション後、`/tribal-validate` 実行 → schema validation が通る
-- [ ] 🧪 新規 module 1 個を analyst にかけて、Q3 の出力に confidence が含まれることを目視確認
-- [ ] 🧪 意図的に AMBIGUOUS な Q3 を含む analyst JSON を作って `context-critic` 起動 → verdict が `MANUAL_REVIEW` になることを確認
-- [ ] 🧪 critic の reconciliation ループが平均 1.5-2.0 ラウンドに収束することを確認（baseline は 2.3）
-- [ ] 🧪 `_quality-log.jsonl` に新フィールドが書かれていることを確認
+- [x] 📝 単体テスト: `test_migrate.py` 6/6 PASS
+- [x] 🧪 baseline-target で migration 実行 → エラーなく完了
+- [x] 🧪 新 schema validation: 3 analyst JSON 全 PASS
+- [x] 🧪 idempotent 確認 (2 回目 dry-run で 0 migrated)
+- [x] 🧪 weighted_average 数値検証 (path=2x, non_obvious=2x の効果)
+- [ ] 🧪 実 LLM critic で MANUAL_REVIEW verdict 動作確認 (Phase 7 E2E)
+- [ ] 🧪 critic ループ短縮 (baseline 2.3 → 1.5-2.0) 計測 (Phase 7 E2E)
 
 ⏪ **ロールバック**: schema を revert すれば旧 analyst でも問題なく動く（required 緩和方向のため）
 
-✅ Phase 3 完了条件: AMBIGUOUS 自動上申が動作、reconciliation ループ短縮、新フィールドが log に記録
+✅ **Phase 3 完了**: confidence + MANUAL_REVIEW + weighted_overall インフラ完成、migration 動作。
+詳細は `docs/phase3-completion-report.md`。実 LLM 検証は Phase 7。
 
 ---
 

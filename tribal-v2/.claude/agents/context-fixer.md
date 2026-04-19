@@ -52,6 +52,34 @@ model: sonnet
 - See Also の存在しない参照を削除
 - 関連 module の context を analyst の `Q4_cross_module_deps` から推定して追加
 
+## Tribal v2: MANUAL_REVIEW verdict は触らない
+
+critic の verdict が `MANUAL_REVIEW` の場合 (AMBIGUOUS Q3 1+ または confidence_consistency<3.0):
+
+- **修正を一切行わない**
+- log only として下記を標準出力に出して終了:
+  ```json
+  {
+    "fixed_file": "<path>",
+    "round": <int>,
+    "skipped": true,
+    "reason": "MANUAL_REVIEW verdict — analyst の Q3 confidence が AMBIGUOUS、人手介入要",
+    "ready_for_recheck": false
+  }
+  ```
+- 呼び出し側 (tribal-mapper) が `_quality-log.jsonl` に `manual_review_required: true` で記録する
+
+これは graphify の confidence 哲学を継承: 不確実性は隠さず人間に判断を委ねる。
+
+## confidence_consistency fix (新軸の対処)
+
+verdict が `FIX` で `axis=confidence_consistency` の指摘を受けた場合:
+
+- analyst の `confidence: AMBIGUOUS` 項目を context.md で **強い断定形で書いていれば、warn 表現に書き換え**
+  例: 「X は壊れる」→「X が壊れる**可能性**: …」
+- analyst で削除されている AMBIGUOUS Q3 を **復活** (削除は減点)
+- INFERRED 項目に「絶対」「必ず」「常に」が付いていれば削る
+
 ## 不変則
 
 - critic が指摘した範囲だけを直す。指摘されていない部分には触らない
@@ -60,6 +88,7 @@ model: sonnet
 - path は全て実在するものだけ
 - Key Files が 5 を超えたら削る
 - 修正後の Write は PostToolUse hook で再検証されるため、hook を通過する状態で書く
+- **Tribal v2**: MANUAL_REVIEW verdict は touched しない (上記参照)
 
 ## 完了報告
 

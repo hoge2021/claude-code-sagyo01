@@ -32,11 +32,16 @@
         "path_accuracy": {"type": "number", "minimum": 0, "maximum": 5},
         "non_obvious_value": {"type": "number", "minimum": 0, "maximum": 5},
         "modification_readiness": {"type": "number", "minimum": 0, "maximum": 5},
-        "cross_ref_integrity": {"type": "number", "minimum": 0, "maximum": 5}
+        "cross_ref_integrity": {"type": "number", "minimum": 0, "maximum": 5},
+        "confidence_consistency": {"type": "number", "minimum": 0, "maximum": 5}
       }
     },
     "overall": {"type": "number", "minimum": 0, "maximum": 5},
-    "verdict": {"type": "string", "enum": ["PASS", "FIX"]},
+    "weighted_overall": {
+      "type": "number", "minimum": 0, "maximum": 5,
+      "description": "Tribal v2: 軸ごとの weighted average (path_accuracy=2x, non_obvious_value=2x)"
+    },
+    "verdict": {"type": "string", "enum": ["PASS", "FIX", "MANUAL_REVIEW"]},
     "manual_review_required": {"type": "boolean"},
     "reason": {
       "type": "string",
@@ -45,6 +50,28 @@
     "git_sha": {
       "type": "string",
       "description": "評価時の HEAD SHA"
+    },
+    "tokens_saved_ratio": {
+      "type": "number", "minimum": 0,
+      "description": "Tribal v2: router 経由 vs naive load の token 比率 (benchmark-reporter が記録)"
+    },
+    "confidence_summary": {
+      "type": "object",
+      "description": "Tribal v2: analyst Q3 の confidence 分布",
+      "properties": {
+        "extracted": {"type": "integer", "minimum": 0},
+        "inferred": {"type": "integer", "minimum": 0},
+        "ambiguous": {"type": "integer", "minimum": 0}
+      }
+    },
+    "ast_extraction_method": {
+      "type": "string",
+      "enum": ["ast_v1_grep_only", "ast_v2_tree_sitter", "ast_v2_fallback"],
+      "description": "Tribal v2: どの抽出経路で Q4 が決定されたか"
+    },
+    "cache_hit": {
+      "type": "boolean",
+      "description": "Tribal v2: この entry の analyst 結果が cache hit から復元されたか"
     }
   }
 }

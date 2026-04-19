@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Context Critic Output",
+  "title": "Context Critic Output (Tribal v2)",
   "type": "object",
   "required": ["file", "evaluated_at", "round", "scores", "overall", "verdict"],
   "properties": {
@@ -18,11 +18,29 @@
         "path_accuracy": {"type": "number", "minimum": 0.0, "maximum": 5.0},
         "non_obvious_value": {"type": "number", "minimum": 0.0, "maximum": 5.0},
         "modification_readiness": {"type": "number", "minimum": 0.0, "maximum": 5.0},
-        "cross_ref_integrity": {"type": "number", "minimum": 0.0, "maximum": 5.0}
+        "cross_ref_integrity": {"type": "number", "minimum": 0.0, "maximum": 5.0},
+        "confidence_consistency": {
+          "type": "number",
+          "minimum": 0.0, "maximum": 5.0,
+          "description": "Tribal v2 6 軸目: context の断定形と analyst の confidence (特に AMBIGUOUS) が整合しているか"
+        }
       }
     },
     "overall": {"type": "number", "minimum": 0.0, "maximum": 5.0},
-    "verdict": {"type": "string", "enum": ["PASS", "FIX"]},
+    "weighted_overall": {
+      "type": "number",
+      "minimum": 0.0, "maximum": 5.0,
+      "description": "Tribal v2: 軸ごとの weight 加重平均。path_accuracy=2.0, non_obvious_value=2.0, others=1.0"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FIX", "MANUAL_REVIEW"],
+      "description": "Tribal v2: AMBIGUOUS Q3 が 1 件以上または confidence_consistency<3.0 で MANUAL_REVIEW (人手介入)"
+    },
+    "manual_review_reason": {
+      "type": "string",
+      "description": "verdict が MANUAL_REVIEW の場合の根拠"
+    },
     "fixes_required": {
       "type": "array",
       "items": {
@@ -33,7 +51,8 @@
             "type": "string",
             "enum": [
               "conciseness", "path_accuracy", "non_obvious_value",
-              "modification_readiness", "cross_ref_integrity"
+              "modification_readiness", "cross_ref_integrity",
+              "confidence_consistency"
             ]
           },
           "line_range": {
@@ -46,6 +65,11 @@
         }
       }
     },
-    "broken_paths": {"type": "array", "items": {"type": "string"}}
+    "broken_paths": {"type": "array", "items": {"type": "string"}},
+    "ambiguous_q3_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Tribal v2: analyst Q3 のうち confidence=AMBIGUOUS の件数 (MANUAL_REVIEW 自動上申の根拠)"
+    }
   }
 }

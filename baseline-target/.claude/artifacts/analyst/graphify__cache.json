@@ -2,23 +2,80 @@
   "module": "graphify/cache",
   "module_path": "graphify/cache.py",
   "analyzed_at": "2026-04-19T00:00:00Z",
-  "files_read": ["graphify/cache.py"],
+  "files_read": [
+    "graphify/cache.py"
+  ],
   "Q1_what_it_configures": "ファイル単位の SHA256 キャッシュを管理し、変更のないファイルの再抽出をスキップするためのストレージ層。",
   "Q2_modification_patterns": [
-    {"pattern": "cache key 算出ロジックを変更する", "example_files": ["graphify/cache.py"], "example_change": "file_hash() に metadata を追加して invalidation 条件を増やす"},
-    {"pattern": "拡張子別の hash 戦略を追加する", "example_files": ["graphify/cache.py"], "example_change": "_body_content() に新拡張子の frontmatter 除外を追加"},
-    {"pattern": "cache 配置先を変更する", "example_files": ["graphify/cache.py"], "example_change": "cache_dir() の戻り値を変える（呼び出し側全てに影響）"}
+    {
+      "pattern": "cache key 算出ロジックを変更する",
+      "example_files": [
+        "graphify/cache.py"
+      ],
+      "example_change": "file_hash() に metadata を追加して invalidation 条件を増やす"
+    },
+    {
+      "pattern": "拡張子別の hash 戦略を追加する",
+      "example_files": [
+        "graphify/cache.py"
+      ],
+      "example_change": "_body_content() に新拡張子の frontmatter 除外を追加"
+    },
+    {
+      "pattern": "cache 配置先を変更する",
+      "example_files": [
+        "graphify/cache.py"
+      ],
+      "example_change": "cache_dir() の戻り値を変える（呼び出し側全てに影響）"
+    }
   ],
   "Q3_non_obvious_patterns": [
-    {"name": "Markdown frontmatter は hash 対象外", "trap": ".md ファイルの YAML frontmatter (タグ・status 等) を更新しても cache 無効化されず、古い抽出結果が返る。意図的だが、frontmatter に意味的な変更を入れたい場合は別 invalidation が必要。", "evidence_file": "graphify/cache.py:10-17", "why_non_obvious": "「ファイル変更で必ず cache 無効化される」という直感に反する。コメント無しでは見落とす"},
-    {"name": "hash key に relative path を混入", "trap": "fall back で resolved 絶対パスを使う分岐がある。同一ファイルでも実行 root が違うと cache が共有されない。CI と手元で別 cache が育つ。", "evidence_file": "graphify/cache.py:36-41", "why_non_obvious": "portability 目的の設計だが、root が変わると cache miss が突然増える"},
-    {"name": "Windows での os.replace fallback", "trap": "Windows で短時間ファイルロックが起きる場合、os.replace が PermissionError (WinError 5) を投げる。copy + unlink fallback があるが、unlink 失敗時は tmp ファイルがゴミとして残る可能性。", "evidence_file": "graphify/cache.py:79-89", "why_non_obvious": "Linux 開発者には見えない Windows 固有の race condition"}
+    {
+      "name": "Markdown frontmatter は hash 対象外",
+      "trap": ".md ファイルの YAML frontmatter (タグ・status 等) を更新しても cache 無効化されず、古い抽出結果が返る。意図的だが、frontmatter に意味的な変更を入れたい場合は別 invalidation が必要。",
+      "evidence_file": "graphify/cache.py:10-17",
+      "why_non_obvious": "「ファイル変更で必ず cache 無効化される」という直感に反する。コメント無しでは見落とす",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "name": "hash key に relative path を混入",
+      "trap": "fall back で resolved 絶対パスを使う分岐がある。同一ファイルでも実行 root が違うと cache が共有されない。CI と手元で別 cache が育つ。",
+      "evidence_file": "graphify/cache.py:36-41",
+      "why_non_obvious": "portability 目的の設計だが、root が変わると cache miss が突然増える",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "name": "Windows での os.replace fallback",
+      "trap": "Windows で短時間ファイルロックが起きる場合、os.replace が PermissionError (WinError 5) を投げる。copy + unlink fallback があるが、unlink 失敗時は tmp ファイルがゴミとして残る可能性。",
+      "evidence_file": "graphify/cache.py:79-89",
+      "why_non_obvious": "Linux 開発者には見えない Windows 固有の race condition",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    }
   ],
   "Q4_cross_module_deps": [],
   "Q5_tribal_knowledge_from_comments": [
-    {"finding": "「Using a relative path (not absolute) makes cache entries portable across machines and checkout directories, so shared caches and CI work correctly」 — 共有 cache を意図した設計", "source": "graphify/cache.py:23-26", "category": "comment"},
-    {"finding": "「For Markdown files (.md), only the body below the YAML frontmatter is hashed, so metadata-only changes (e.g. reviewed, status, tags) do not invalidate the cache」 — frontmatter 編集をワークフロー上の noise と見なす設計判断", "source": "graphify/cache.py:28-29", "category": "comment"},
-    {"finding": "「Windows: os.replace can fail with WinError 5 if the target is briefly locked. Fall back to copy-then-delete」 — Windows ロック対策が後付け", "source": "graphify/cache.py:84-85", "category": "comment"}
+    {
+      "finding": "「Using a relative path (not absolute) makes cache entries portable across machines and checkout directories, so shared caches and CI work correctly」 — 共有 cache を意図した設計",
+      "source": "graphify/cache.py:23-26",
+      "category": "comment"
+    },
+    {
+      "finding": "「For Markdown files (.md), only the body below the YAML frontmatter is hashed, so metadata-only changes (e.g. reviewed, status, tags) do not invalidate the cache」 — frontmatter 編集をワークフロー上の noise と見なす設計判断",
+      "source": "graphify/cache.py:28-29",
+      "category": "comment"
+    },
+    {
+      "finding": "「Windows: os.replace can fail with WinError 5 if the target is briefly locked. Fall back to copy-then-delete」 — Windows ロック対策が後付け",
+      "source": "graphify/cache.py:84-85",
+      "category": "comment"
+    }
   ],
-  "stats": {"files_count": 1, "files_read_count": 1, "lines_of_code": 169}
+  "stats": {
+    "files_count": 1,
+    "files_read_count": 1,
+    "lines_of_code": 169
+  }
 }

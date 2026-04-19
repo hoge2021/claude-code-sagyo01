@@ -2,24 +2,88 @@
   "module": "graphify/security",
   "module_path": "graphify/security.py",
   "analyzed_at": "2026-04-19T00:00:00Z",
-  "files_read": ["graphify/security.py"],
+  "files_read": [
+    "graphify/security.py"
+  ],
   "Q1_what_it_configures": "外部入力 (URL, path, label) の validation と SSRF/path traversal/XSS 対策の集約点。",
   "Q2_modification_patterns": [
-    {"pattern": "新しい cloud metadata host のブロック追加", "example_files": ["graphify/security.py"], "example_change": "_BLOCKED_HOSTS に新しいホストを追加"},
-    {"pattern": "fetch サイズ上限の変更", "example_files": ["graphify/security.py"], "example_change": "_MAX_FETCH_BYTES や _MAX_TEXT_BYTES の調整"},
-    {"pattern": "label sanitization 規則の更新", "example_files": ["graphify/security.py"], "example_change": "_CONTROL_CHAR_RE や _MAX_LABEL_LEN の調整"}
+    {
+      "pattern": "新しい cloud metadata host のブロック追加",
+      "example_files": [
+        "graphify/security.py"
+      ],
+      "example_change": "_BLOCKED_HOSTS に新しいホストを追加"
+    },
+    {
+      "pattern": "fetch サイズ上限の変更",
+      "example_files": [
+        "graphify/security.py"
+      ],
+      "example_change": "_MAX_FETCH_BYTES や _MAX_TEXT_BYTES の調整"
+    },
+    {
+      "pattern": "label sanitization 規則の更新",
+      "example_files": [
+        "graphify/security.py"
+      ],
+      "example_change": "_CONTROL_CHAR_RE や _MAX_LABEL_LEN の調整"
+    }
   ],
   "Q3_non_obvious_patterns": [
-    {"name": "Redirect 先を毎回 re-validate", "trap": "_NoFileRedirectHandler を経由しない urlopen を直接呼ぶと open-redirect SSRF が成立する。新しい fetch 経路を追加するときに必ず safe_fetch / safe_fetch_text を経由しないと防御が外れる。", "evidence_file": "graphify/security.py:67-80", "why_non_obvious": "validate_url() を呼ぶだけでは redirect が抜け道になる、という設計が読み取りにくい"},
-    {"name": "hostname を IP 解決してから private 判定", "trap": "DNS rebinding 攻撃で「初回解決は public、後続解決は private IP」を返す手口は防げない。socket.getaddrinfo は失敗しても except を握りつぶすので、その後の fetch でやっと検出される。", "evidence_file": "graphify/security.py:50-62", "why_non_obvious": "「validate_url が成功 = 安全」と早合点しがちだが、TOCTOU の隙間がある"},
-    {"name": "validate_graph_path は base 存在を要求", "trap": "graphify-out/ ディレクトリが存在しない初期状態で MCP server を起動すると、path 検証以前に「base が無い」エラーで止まる。グラフ未構築時の MCP serve がこのエラーを混乱の原因にする。", "evidence_file": "graphify/security.py:165-169", "why_non_obvious": "「path validation が走らない」のではなく「base 不在で止まる」のは挙動を読まないと分からない"},
-    {"name": "sanitize_label は HTML escape しない", "trap": "コメントに「For direct HTML injection, wrap the result with html.escape()」と書かれている。sanitize_label のみで pyvis 等に渡すと XSS の余地が残る。callsite が html.escape を忘れると脆弱性が再導入される。", "evidence_file": "graphify/security.py:194-203", "why_non_obvious": "関数名が sanitize_label なので「全 sanitization 済み」と誤解しやすい"}
+    {
+      "name": "Redirect 先を毎回 re-validate",
+      "trap": "_NoFileRedirectHandler を経由しない urlopen を直接呼ぶと open-redirect SSRF が成立する。新しい fetch 経路を追加するときに必ず safe_fetch / safe_fetch_text を経由しないと防御が外れる。",
+      "evidence_file": "graphify/security.py:67-80",
+      "why_non_obvious": "validate_url() を呼ぶだけでは redirect が抜け道になる、という設計が読み取りにくい",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "name": "hostname を IP 解決してから private 判定",
+      "trap": "DNS rebinding 攻撃で「初回解決は public、後続解決は private IP」を返す手口は防げない。socket.getaddrinfo は失敗しても except を握りつぶすので、その後の fetch でやっと検出される。",
+      "evidence_file": "graphify/security.py:50-62",
+      "why_non_obvious": "「validate_url が成功 = 安全」と早合点しがちだが、TOCTOU の隙間がある",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "name": "validate_graph_path は base 存在を要求",
+      "trap": "graphify-out/ ディレクトリが存在しない初期状態で MCP server を起動すると、path 検証以前に「base が無い」エラーで止まる。グラフ未構築時の MCP serve がこのエラーを混乱の原因にする。",
+      "evidence_file": "graphify/security.py:165-169",
+      "why_non_obvious": "「path validation が走らない」のではなく「base 不在で止まる」のは挙動を読まないと分からない",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "name": "sanitize_label は HTML escape しない",
+      "trap": "コメントに「For direct HTML injection, wrap the result with html.escape()」と書かれている。sanitize_label のみで pyvis 等に渡すと XSS の余地が残る。callsite が html.escape を忘れると脆弱性が再導入される。",
+      "evidence_file": "graphify/security.py:194-203",
+      "why_non_obvious": "関数名が sanitize_label なので「全 sanitization 済み」と誤解しやすい",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    }
   ],
   "Q4_cross_module_deps": [],
   "Q5_tribal_knowledge_from_comments": [
-    {"finding": "「Prevents open-redirect SSRF attacks where an http:// URL redirects to file:// or an internal address」 — 過去に SSRF 経路として redirect が問題視された", "source": "graphify/security.py:69-71", "category": "comment"},
-    {"finding": "「Also requires the graphify-out/ directory to exist. So a caller cannot trick graphify into reading files before any graph has been built」 — graph 不在時の悪用を明示的に防ぐ", "source": "graphify/security.py:148-150", "category": "comment"},
-    {"finding": "「Safe for embedding in JSON data (inside <script> tags) and plain text. For direct HTML injection, wrap the result with html.escape()」 — caller 責任の sanitization レイヤーを明確化", "source": "graphify/security.py:196-198", "category": "comment"}
+    {
+      "finding": "「Prevents open-redirect SSRF attacks where an http:// URL redirects to file:// or an internal address」 — 過去に SSRF 経路として redirect が問題視された",
+      "source": "graphify/security.py:69-71",
+      "category": "comment"
+    },
+    {
+      "finding": "「Also requires the graphify-out/ directory to exist. So a caller cannot trick graphify into reading files before any graph has been built」 — graph 不在時の悪用を明示的に防ぐ",
+      "source": "graphify/security.py:148-150",
+      "category": "comment"
+    },
+    {
+      "finding": "「Safe for embedding in JSON data (inside <script> tags) and plain text. For direct HTML injection, wrap the result with html.escape()」 — caller 責任の sanitization レイヤーを明確化",
+      "source": "graphify/security.py:196-198",
+      "category": "comment"
+    }
   ],
-  "stats": {"files_count": 1, "files_read_count": 1, "lines_of_code": 203}
+  "stats": {
+    "files_count": 1,
+    "files_read_count": 1,
+    "lines_of_code": 203
+  }
 }

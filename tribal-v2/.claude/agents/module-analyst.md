@@ -67,7 +67,21 @@ LLM 思考を Q1/Q3/Q5 (意味的なもの) に集中させる。
       "name": "<短く specific な名前>",
       "trap": "<違反すると何が壊れるか、症状ベースで>",
       "evidence_file": "<file:line>",
-      "why_non_obvious": "<コードを読んでも自明でない理由>"
+      "why_non_obvious": "<コードを読んでも自明でない理由>",
+      "confidence": "EXTRACTED|INFERRED|AMBIGUOUS",
+      "confidence_score": 1.0,
+      "related_modules": ["<関連 module id>"]
+    }
+  ],
+  "Q3_hyperedges": [
+    {
+      "id": "snake_case_id",
+      "label": "Human readable label",
+      "modules": ["mod_a", "mod_b", "mod_c"],
+      "trap": "違反時の症状",
+      "evidence": [{"file": "...", "line": 0}],
+      "confidence": "EXTRACTED|INFERRED|AMBIGUOUS",
+      "confidence_score": 0.8
     }
   ],
   "Q4_cross_module_deps": [
@@ -92,6 +106,31 @@ LLM 思考を Q1/Q3/Q5 (意味的なもの) に集中させる。
   }
 }
 ```
+
+## Tribal v2: confidence_score の規範 (graphify 由来)
+
+Q3 各項目に **必ず** `confidence` と `confidence_score` を付ける:
+
+- `EXTRACTED`: source code / commit message に明示的に書かれている → **常に 1.0**
+  - 例: コメントで「FIXME: this breaks when X」と明記されている trap
+- `INFERRED`: 複数 file から推測した妥当な含意 → **0.6-0.9**
+  - 0.8-0.9: 直接的な構造的根拠あり (shared data structure, 明確な依存)
+  - 0.6-0.7: 推論で根拠あり、ただし不確実
+- `AMBIGUOUS`: 不確実だが見落とすには重要 → **0.1-0.3**
+  - 例: 「この path で壊れるかも、要検証」レベルの仮説
+  - **AMBIGUOUS な Q3 が 1 件でもあると critic が自動で MANUAL_REVIEW verdict** を出す
+  - つまり「自信ないなら AMBIGUOUS で記録すべき、削るな」
+
+`confidence_score = 0.5` をデフォルト値として使ってはならない (規範違反)。
+edge ごとに上記基準で判断する (graphify と同じルール)。
+
+## Tribal v2: Q3_hyperedges (3+ module 横断 trap)
+
+pairwise edge では表現できない 3 module 以上の共通失敗モードを記録:
+- 「全 schema validator が共通の正規化ルールを共有 → 順序変更で 3 module 同時に壊れる」
+- 「全 cache 層が同じ TTL 定数を見ている → 変更影響が広範」
+
+最大 5 件まで。`modules` は minItems=3。空配列 OK。
 
 ## 不変則
 

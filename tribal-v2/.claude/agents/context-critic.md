@@ -65,7 +65,22 @@ cd .claude/critic-workspace
 - See Also の参照先 context が実在し、かつ関連性が高いか
 - Quick Commands 内のコマンドが Key Files と整合しているか
 
-## 出力
+### 6. Confidence Consistency (Tribal v2 6 軸目)
+
+**ただしこの軸の評価は隔離原則の例外**: analyst.json の `Q3_non_obvious_patterns[*].confidence`
+を **読んで良い** (隔離環境からは禁止される唯一の許可)。
+
+- context.md の Q3 記述が断定形 (「X は必ず壊れる」) なのに analyst で `confidence: AMBIGUOUS`
+  なら **減点**。confidence と語気の不整合
+- AMBIGUOUS な Q3 が context.md で削除されている → 減点 (重要だから削るな)
+- INFERRED な Q3 が「絶対」「必ず」のような強い語で書かれている → 減点
+
+評価:
+- 5.0: 全 Q3 で confidence と語気が一致、AMBIGUOUS は warn 表現
+- 3.0: 1 件不整合
+- < 3.0: 複数不整合 (verdict は **MANUAL_REVIEW** に格上げ)
+
+## Tribal v2 出力 schema (verdict 拡張済み)
 
 `.claude/artifacts/critic/<module-flat>.json` に書き込む（隔離環境から脱出して書く）:
 
@@ -79,13 +94,17 @@ cd .claude/critic-workspace
     "path_accuracy": 0.0,
     "non_obvious_value": 0.0,
     "modification_readiness": 0.0,
-    "cross_ref_integrity": 0.0
+    "cross_ref_integrity": 0.0,
+    "confidence_consistency": 0.0
   },
   "overall": 0.0,
-  "verdict": "PASS|FIX",
+  "weighted_overall": 0.0,
+  "verdict": "PASS|FIX|MANUAL_REVIEW",
+  "manual_review_reason": "<MANUAL_REVIEW の場合のみ>",
+  "ambiguous_q3_count": 0,
   "fixes_required": [
     {
-      "axis": "conciseness|path_accuracy|non_obvious_value|modification_readiness|cross_ref_integrity",
+      "axis": "conciseness|path_accuracy|non_obvious_value|modification_readiness|cross_ref_integrity|confidence_consistency",
       "line_range": [<start>, <end>],
       "issue": "<具体的に何が問題か>",
       "suggested_fix": "<修正の方向性>"
@@ -95,11 +114,27 @@ cd .claude/critic-workspace
 }
 ```
 
-## 判定基準
+`weighted_overall` の計算:
+```
+weights = {path_accuracy: 2.0, non_obvious_value: 2.0, others: 1.0}
+weighted_overall = sum(score[k] * weights[k] for k in scores) / sum(weights.values())
+```
 
-- `overall < 4.0` → `FIX`
-- いずれかの軸が `2.0 以下` → `FIX`
-- `path_accuracy < 5.0` → 即 `FIX`（broken path は許容しない）
+## Tribal v2 判定基準 (verdict 三値化)
+
+優先度順:
+
+1. **MANUAL_REVIEW** (人手介入必須、自動修正不可):
+   - analyst.json の Q3 に `confidence: AMBIGUOUS` が **1 件以上**
+   - `confidence_consistency` < 3.0
+   - `manual_review_reason` に根拠を記入
+2. **FIX** (fixer に渡して再 critic):
+   - `weighted_overall < 4.0`
+   - いずれかの軸が `2.0 以下`
+   - `path_accuracy < 5.0` (broken path 許容なし)
+3. **PASS**: 上記いずれにも該当せず
+
+`overall` は従来通り単純平均、`weighted_overall` で判定。両方記録する (履歴用)。
 
 ## 完了処理
 

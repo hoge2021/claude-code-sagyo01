@@ -29,12 +29,42 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "trap", "evidence_file", "why_non_obvious"],
+        "required": ["name", "trap", "evidence_file", "why_non_obvious", "confidence", "confidence_score"],
         "properties": {
           "name": {"type": "string"},
           "trap": {"type": "string"},
           "evidence_file": {"type": "string"},
-          "why_non_obvious": {"type": "string"}
+          "why_non_obvious": {"type": "string"},
+          "confidence": {"type": "string", "enum": ["EXTRACTED", "INFERRED", "AMBIGUOUS"]},
+          "confidence_score": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "related_modules": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "Q3_hyperedges": {
+      "type": "array",
+      "description": "Tribal v2: 3+ module を跨ぐ共通 trap を pairwise edge では表現できない場合に記録",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "modules", "trap"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "label": {"type": "string"},
+          "modules": {"type": "array", "minItems": 3, "items": {"type": "string"}},
+          "trap": {"type": "string"},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["file"],
+              "properties": {
+                "file": {"type": "string"},
+                "line": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "confidence": {"type": "string", "enum": ["EXTRACTED", "INFERRED", "AMBIGUOUS"]},
+          "confidence_score": {"type": "number", "minimum": 0.0, "maximum": 1.0}
         }
       }
     },
