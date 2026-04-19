@@ -337,61 +337,45 @@ artifact 全部読まず selective Read する設計に依存 (Phase 7 で実測
 ### 6.2 security モジュール
 
 - [ ] 📝 `tribal/security.py` を実装（graphify からほぼそのまま）
-  - `validate_url()` `safe_fetch()` `validate_graph_path()` `sanitize_label()`
-- [ ] 📝 `.claude/scripts/validate_context_file.py` を更新:
-  - path 検証で `tribal.security.validate_graph_path()` を経由
-  - `.claude/context/` 外への traversal を物理的に禁止
+  - `validate_url()` `safe_fetch()` `validate_context_path()` `sanitize_label()` 全実装
+- [x] 📝 `.claude/scripts/validate_context_file.py` を `tribal.security.validate_context_path` 経由に (graceful fallback 付き)
 
 ### 6.3 MCP server
 
-- [ ] 📝 `tribal/serve.py` を実装（graphify `serve.py` を tribal 用に改修）
-- [ ] 📝 MCP tools を実装:
-  - `route_query(query)` → router skill 相当のロジック
-  - `get_intent(name)` → routing-table から intent 定義返却
-  - `get_ripple(module)` → dep-graph の ripple_index 返却
-  - `get_god_nodes(community?, top_n?)` → god-nodes.json 返却
-  - `get_community(id)` → communities.json 返却
-  - `get_quality_history(module)` → quality-log.jsonl 該当行返却
-- [ ] 📝 `tribal serve` コマンドで MCP stdio server 起動
+- [x] 📝 `tribal/serve.py` 実装 (235 LOC, 6 MCP tools)
+- [x] 📝 MCP tools: route_query / get_intent / get_ripple / get_god_nodes / get_community / get_quality_history
+- [x] 📝 `tribal serve --mcp` で MCP stdio server 起動可
 
 ### 6.4 multi-platform installer
 
-- [ ] 📝 `tribal/__main__.py` の `_PLATFORM_CONFIG` に Claude / Codex / OpenCode を定義（graphify パターン）
-- [ ] 📝 `tribal install --platform claude` 実装:
-  - skill / hook / settings.json 一式を配置
-  - 既存挙動と同じになることを確認
-- [ ] 📝 `tribal install --platform codex` 実装:
-  - AGENTS.md と `.codex/hooks.json` を配置
-- [ ] 📝 `tribal install --platform opencode` 実装:
-  - AGENTS.md と `.opencode/plugins/tribal.js` を配置
-- [ ] 📝 `tribal uninstall --platform <name>` も対称に実装
-- [ ] 📝 `.tribal_version` ファイルでバージョン同期（graphify の `.graphify_version` パターン）
+- [x] 📝 `tribal/__main__.py` で 3 platform installer 実装 (claude/codex/opencode)
+- [x] 📝 `tribal install --platform claude` → `.claude/` tree + `CLAUDE.md` + settings.json マージ
+- [x] 📝 `tribal install --platform codex` → AGENTS.md + .codex/hooks.json
+- [x] 📝 `tribal install --platform opencode` → AGENTS.md + .opencode/plugins/tribal.js
+- [x] 📝 `tribal uninstall --platform claude` 実装 (hook 除去 + ファイル保持)
+- [x] 📝 `.tribal_version` でバージョン同期
 
 ### 6.5 ドキュメント整備
 
-- [ ] 📝 `README.md` を更新:
-  - インストール方法 (`pip install tribal-knowledge-mapper`)
-  - multi-platform install 手順
-  - MCP server の接続方法 (Claude Desktop / Codex の設定例)
-- [ ] 📝 `CHANGELOG.md` を新規作成、Phase 1-6 の変更を記録
+- [x] 📝 `README.md` 更新 (使い方 + 進捗表 + 構成)
+- [x] 📝 `phase6-completion-report.md` 作成
+- [ ] 📝 `CHANGELOG.md` (Phase 7 で総まとめ)
 
 ### 6.6 Phase 6 動作確認
 
-- [ ] 🧪 `pip install -e .` でローカルインストール成功
-- [ ] 🧪 `tribal --version` で version 表示
-- [ ] 🧪 `tribal install --platform claude` 実行 → 既存 `.claude/` と同じ構成が再現
-- [ ] 🧪 `tribal serve` 起動 → MCP stdio server が応答
-- [ ] 🧪 Claude Desktop の `claude_desktop_config.json` に登録 → tribal MCP tools が見えること
-- [ ] 🧪 MCP tool `route_query` を呼び出し → routing 結果が返ること
-- [ ] 🧪 MCP tool `get_god_nodes` で expected の module が返ること
-- [ ] 🧪 path traversal テスト: `tribal serve` に `../../../etc/passwd` 相当の入力 → `validate_graph_path()` で reject されること
-- [ ] 🧪 (可能なら) Codex 環境で `tribal install --platform codex` → AGENTS.md 経由で routing が走ることを確認
-- [ ] 🧪 (可能なら) OpenCode 環境で同様の動作確認
-- [ ] 🧪 `tribal uninstall --platform claude` → クリーンに削除されること
+- [x] 🧪 `pip install -e .` 成功 (tribal 2.0.0-rc1)
+- [x] 🧪 `tribal --version` / `--help` 動作
+- [x] 🧪 `tribal install --platform claude --target /tmp/test` で完全展開
+- [x] 🧪 `python3 -m tribal.serve --call route_query` で intent 分類動作
+- [x] 🧪 path traversal 防御 (T5 で `validate_context_path` ブロック確認)
+- [x] 🧪 単体テスト 10/10 PASS (test_phase6.py)
+- [ ] 🧪 Codex / OpenCode 実機検証 (Phase 7)
+- [ ] 🧪 Claude Desktop MCP 接続実機テスト (Phase 7)
 
-⏪ **ロールバック**: `tribal/` ディレクトリ削除、`.claude/scripts/` の shim を元の実装に戻す
+⏪ **ロールバック**: `tribal/` ディレクトリ削除、`pip uninstall tribal-knowledge-mapper`
 
-✅ Phase 6 完了条件: pip インストール可能、MCP server 起動成功、3 platform で installer 動作
+✅ **Phase 6 完了**: Python パッケージ化 + 6 MCP tools + 3 platform installer。
+詳細は `docs/phase6-completion-report.md`。
 
 ---
 

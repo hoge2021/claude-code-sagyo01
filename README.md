@@ -12,33 +12,53 @@ Tribal Knowledge Mapper の改善・強化作業リポジトリ。
 ```
 claude-code-sagyo01/
 ├── docs/
-│   ├── tribal-improvement-plan.md       # 改善計画書（What / Why）
-│   └── tribal-migration-checklist.md    # 移行チェックシート（How / 実行順）
-├── tribal/                              # ★ベースとなる v1 実装（変更しない）
-│   ├── .claude/                         # subagents, skills, scripts, schemas
-│   ├── CLAUDE.md
-│   └── README.md
+│   ├── tribal-improvement-plan.md       # 改善計画書
+│   ├── tribal-migration-checklist.md    # 移行チェックシート
+│   └── phase{0-7}-completion-report.md  # 各 Phase 完了報告
+├── tribal/                              # v1 baseline (不変)
+├── tribal-v2/                           # ★v2 開発ディレクトリ
+│   ├── .claude/                         # ランタイム hook scripts + skills
+│   ├── tribal/                          # Python パッケージ (pip install 可)
+│   ├── tests/                           # 5 言語 AST fixture
+│   └── pyproject.toml                   # PyPI 配布設定
+├── baseline-target/                     # graphify 0.4.23 + tribal v1 適用 (比較用)
 └── README.md
 ```
 
-## 進め方
+## 使い方 (v2 が動くようになった Phase 6 以降)
 
-`docs/tribal-migration-checklist.md` の Phase 0 → Phase 7 を順次実行する。
+```bash
+# Python パッケージとして install
+cd tribal-v2
+pip install -e .
 
-| Phase | 内容 |
-|---|---|
-| 0 | 準備・baseline 採取 |
-| 1 | Cache Layer 単独導入 |
-| 2 | AST 第1パス |
-| 3 | Confidence Label 必須化 |
-| 4 | Community + GodNode |
-| 5 | Benchmark + PreToolUse Hook |
-| 6 | MCP Server + Multi-Platform |
-| 7 | 統合 E2E + リリース |
+# 対象プロジェクトに展開
+cd /path/to/your-project
+tribal install --platform claude   # or codex, opencode
 
-各 Phase は独立した作業単位として完結し、末尾の動作確認を満たしてから次に進む。
+# Claude Code で
+/tribal-init       # 初回フル構築
+/tribal-route <query>  # 関連 context を 3-5 枚動的選定
+
+# MCP server として起動 (他 platform から tribal 知識を共有)
+tribal serve --base .claude --mcp
+```
+
+## 進捗
+
+| Phase | 内容 | 状態 | commit |
+|---|---|---|---|
+| 0 | baseline 採取 | ✅ | `ce3153b` |
+| 1 | Cache Layer | ✅ | `8c26495` |
+| 2 | AST 5 言語 | ✅ | `84db546` |
+| 3 | Confidence Label | ✅ | `b705aa1` |
+| 4 | Community + GodNode | ✅ | `905efad` |
+| 5 | Benchmark + PreToolUse | ✅ | `e4f97de` |
+| 6 | MCP + Multi-platform | ✅ | (本 commit) |
+| 7 | 統合 E2E + Release | ⏳ | — |
 
 ## 注意
 
-- `tribal/` ディレクトリは v1 baseline として保全。改善作業は別ディレクトリで進行する想定（Phase 1 開始時に方針確定）
-- Phase ごとに動作テスト・ロールバック手順をチェックシートに従って実施
+- `tribal/` は v1 baseline として不変、改善は `tribal-v2/` 側で進行
+- Phase ごとに単体テスト + 動作確認 + ロールバック手順あり (checklist 参照)
+- `baseline-target/` は比較測定用、各 Phase で v2 scripts を被せて E2E 検証→ restore

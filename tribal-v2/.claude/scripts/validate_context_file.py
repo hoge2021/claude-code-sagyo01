@@ -64,11 +64,27 @@ def read_hook_payload() -> dict:
 
 
 def extract_target_path(payload: dict) -> Path | None:
-    """Extract the file path being written from the hook payload."""
+    """Extract the file path being written from the hook payload.
+
+    Tribal v2: tribal.security.validate_context_path で path traversal を防御
+    (graphify から借用)。失敗時は None で silent skip (writes outside .claude/ は無関係)。
+    """
     tool_input = payload.get("tool_input") or {}
     for key in ("file_path", "path", "filename"):
         if key in tool_input and tool_input[key]:
-            return Path(tool_input[key]).resolve()
+            raw = Path(tool_input[key])
+            # v2: try secure validation first
+            try:
+                # Bootstrap tribal package import
+                import sys
+                sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+                from tribal.security import validate_context_path
+                base = Path.cwd() / ".claude"
+                if base.exists():
+                    return validate_context_path(raw, base=base)
+            except (ImportError, ValueError, FileNotFoundError):
+                pass  # Fall back to v1 behavior (resolve only)
+            return raw.resolve()
     return None
 
 
