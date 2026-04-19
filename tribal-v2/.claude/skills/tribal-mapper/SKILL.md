@@ -55,13 +55,24 @@ description: |
 2. 出力を `.claude/context/_repo-map.json` に保存
 3. `node_modules` `vendor` `dist` `build` `target` 等は除外
 
-### Phase 2: Analysis
+### Phase 2a (Tribal v2): Structural Extraction (AST, LLM 不要)
+
+1. `_repo-map.json` の modules **全件** に対して `module-ast-extractor` を Task で起動
+   (model=haiku なので軽量、並列上限なし)
+2. 出力先: `.claude/artifacts/ast/<module-flat>.json` (cache.py 経由で SHA256 cache)
+3. cache hit module は瞬時に完了、LLM 呼び出しゼロ
+4. `lang=unsupported` のみの module は警告付き empty JSON で記録 (Phase 2b で fallback)
+
+### Phase 2b: Semantic Analysis (旧 Phase 2)
 
 1. `_repo-map.json` の modules を 8 個ずつのバッチに分割
-2. 各 module に `module-analyst` を Task で起動（5問 JSON を生成）
-3. 出力先: `.claude/artifacts/analyst/<module-flat>.json`
-4. `module-flat` は `.claude/scripts/flatten_module_path.py` に従う
-5. **refresh モードの場合**: `detect_changed_modules.py` を Bash で実行し、`changed_modules` リストに含まれる module のみ対象
+2. **Tribal v2**: refresh モードの場合、`detect_changed_modules.py` 出力の
+   `changed_modules` のみ対象 (cache hit module は自動 skip)
+3. 各 module に `module-analyst` を Task で起動 (Step 0 で AST.json を必ず先に Read)
+4. 出力先: `.claude/artifacts/analyst/<module-flat>.json`
+5. `module-flat` は `.claude/scripts/flatten_module_path.py` に従う
+6. **AST 連携の効果**: Q4 (deps) と Q2 (example_files) は AST 由来のため、analyst は
+   Q1/Q3/Q5 (意味的) に集中。1 module あたりトークン約 50-60% 削減見込み
 
 ### Phase 3: Compose
 

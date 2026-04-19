@@ -2,6 +2,7 @@
 .claude/artifacts/analyst/*.json
 .claude/artifacts/critic/*.json
 .claude/artifacts/tests/*.json
+.claude/artifacts/ast/*.json
 .claude/critic-workspace/
 .claude/.session-state/
 
@@ -18,4 +19,5 @@
 !.claude/artifacts/analyst/.gitkeep
 !.claude/artifacts/critic/.gitkeep
 !.claude/artifacts/tests/.gitkeep
+!.claude/artifacts/ast/.gitkeep
 !.claude/cache/.gitkeep

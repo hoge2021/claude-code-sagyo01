@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Module AST Extractor Output (Tribal v2 Phase 2)",
+  "type": "object",
+  "required": ["module", "module_path", "extracted_at", "files", "imports", "definitions", "calls", "stats"],
+  "properties": {
+    "module": {"type": "string"},
+    "module_path": {"type": "string"},
+    "extracted_at": {"type": "string", "format": "date-time"},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "lang", "loc"],
+        "properties": {
+          "path": {"type": "string"},
+          "lang": {"type": "string", "enum": ["python", "typescript", "go", "rust", "java", "unsupported"]},
+          "loc": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from_file", "to", "kind", "line"],
+        "properties": {
+          "from_file": {"type": "string"},
+          "to": {"type": "string"},
+          "kind": {"type": "string"},
+          "raw": {"type": "string"},
+          "line": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "definitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name", "file", "line"],
+        "properties": {
+          "kind": {"type": "string", "enum": ["function", "class"]},
+          "name": {"type": "string"},
+          "file": {"type": "string"},
+          "line": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["caller", "callee", "evidence", "confidence", "confidence_score"],
+        "properties": {
+          "caller": {"type": "string"},
+          "callee": {"type": "string"},
+          "evidence": {"type": "string"},
+          "confidence": {"type": "string", "enum": ["EXTRACTED", "INFERRED", "AMBIGUOUS"]},
+          "confidence_score": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "required": ["file_count", "loc_total", "import_count", "call_count", "def_count", "supported_lang_files"],
+      "properties": {
+        "file_count": {"type": "integer", "minimum": 0},
+        "loc_total": {"type": "integer", "minimum": 0},
+        "import_count": {"type": "integer", "minimum": 0},
+        "call_count": {"type": "integer", "minimum": 0},
+        "def_count": {"type": "integer", "minimum": 0},
+        "supported_lang_files": {"type": "integer", "minimum": 0}
+      }
+    },
+    "_cache_hit": {"type": "boolean"}
+  }
+}

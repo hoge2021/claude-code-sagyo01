@@ -19,12 +19,27 @@ model: sonnet
 
 ## 必須実行ステップ
 
+### Step 0 (Tribal v2): AST 結果を先に Read
+
+`.claude/artifacts/ast/<module-flat>.json` が存在すれば **必ず最初に Read** する
+(module-ast-extractor が Phase 2a で生成済み)。AST 結果を Q4 と Q2 の素材として活用し、
+LLM 思考を Q1/Q3/Q5 (意味的なもの) に集中させる。
+
+- AST.json から **直接利用** できるもの:
+  - Q4 cross_module_deps: AST `imports` を集約 (kind=import は EXTRACTED, fragility は LLM で注釈)
+  - Q2 example_files: AST `definitions` の `kind=function|class` の上位を選定
+  - Q4 confidence_score: AST 由来は 1.0 (EXTRACTED), grep 推測は 0.7 (INFERRED)
+- AST.json が無い / `lang=unsupported` の場合は **従来動作 (Step 1-6) にフォールバック**。
+
+### Step 1-6 (従来手順、AST.json が無い時のみ全実施)
+
 1. `Glob` で対象ディレクトリ配下の全ソースファイルを列挙
 2. ファイル数が多い場合は重要度順に処理（entrypoints → 設定 → コア → ユーティリティ）
 3. 各ファイルを Read で読む。**読まずに推測することは禁止**。
 4. Serena MCP が使える場合、`get_symbols_overview` でシンボル一覧を取得してから精読
 5. Q4（cross_module_deps）のために `Grep` で import/include を集計
-6. Q5（tribal_knowledge）のために以下を実行:
+   - **Tribal v2**: AST.json があればこの Grep 集計をスキップして AST `imports` を流用
+6. Q5（tribal_knowledge）のために以下を実行 (AST では取れないので必ず LLM で):
    - インラインコメントを抽出（`//`, `#`, `/* */` 等）
    - `Bash` で `git log --diff-filter=AM --pretty=format:"%h %s" -- <file>` を実行し、関連 commit メッセージを取得
    - 「FIXME」「HACK」「TODO」「DO NOT」「IMPORTANT」「WARNING」コメントを優先

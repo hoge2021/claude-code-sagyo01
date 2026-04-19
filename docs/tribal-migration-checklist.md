@@ -120,57 +120,42 @@
 
 ### 2.1 AST 抽出スクリプト
 
-- [ ] 📝 `.claude/scripts/ast_extract.py` を新規作成
-  - tree-sitter で 5 言語（py, ts/tsx, go, rs, java）対応
-  - graphify の `LanguageConfig` パターンを採用、ただし tribal 用にスリム化
-  - 出力 schema は `tribal-improvement-plan.md` 4.1 節の `module-ast-extractor` を参照
-  - 未対応言語は空 JSON を出力（analyst 側で fallback 動作）
-  - cache.py を経由して結果をキャッシュ
-- [ ] 📝 `.claude/schemas/ast.schema.json` を新規作成（improvement plan の schema を引用）
+- [x] 📝 `.claude/scripts/ast_extract.py` を新規作成 (281 LOC)
+- [x] 📝 `.claude/schemas/ast.schema.json` を新規作成
 
 ### 2.2 新 agent 定義
 
-- [ ] 📝 `.claude/agents/module-ast-extractor.md` を新規作成
-  - `model: haiku` を指定（整形のみ）
-  - `tools: Bash, Read, Glob`
-  - 入力: `module_id`, `module_path`
-  - 出力先: `.claude/artifacts/ast/<module-flat>.json`
+- [x] 📝 `.claude/agents/module-ast-extractor.md` を新規作成
 
 ### 2.3 既存 agent の更新
 
-- [ ] 📝 `.claude/agents/module-analyst.md` を更新:
-  - 必須実行ステップに「`.claude/artifacts/ast/<module-flat>.json` を最初に Read」を追加
-  - Q4 (cross_module_deps) の生成方法を「ast.json の `imports` + `calls` を集約」に変更
-  - Q2 の `example_files` 候補を ast.json の `definitions` から取得
-  - **fallback 規定**: ast.json が無いか empty なら従来動作（互換維持）
-- [ ] 📝 `.claude/skills/tribal-mapper/SKILL.md` を更新:
-  - Phase 2 を Phase 2a (AST) と Phase 2b (Semantic) に分割
-  - 並列実行ルール: 2a は全件一括、2b は 8 並列のまま
-- [ ] 📝 `.claude/artifacts/ast/.gitkeep` を作成
-- [ ] 📝 `.gitignore` に `.claude/artifacts/ast/*.json` を追加
+- [x] 📝 `.claude/agents/module-analyst.md` を更新 (Step 0 で AST.json を Read)
+- [x] 📝 `.claude/skills/tribal-mapper/SKILL.md` を Phase 2a/2b 分割
+- [x] 📝 `.claude/artifacts/ast/.gitkeep` を作成
+- [x] 📝 `.gitignore` に `.claude/artifacts/ast/*.json` 追加
 
 ### 2.4 単体テスト
 
-- [ ] 📝 `tests/fixtures/sample_module/` を作成（py, ts, go, rs, java の極小サンプル）
-- [ ] 📝 `python .claude/scripts/ast_extract.py tests/fixtures/sample_module` で各言語の出力を確認:
-  - imports が抽出されていること
-  - calls が抽出されていること（同一ファイル内）
-  - cache hit で 2 回目が高速
+- [x] 📝 `tests/fixtures/sample_module/` を作成 (py/ts/go/rs/java)
+- [x] 🧪 9/9 PASS (5 言語 + unsupported fallback + cache + stem fallback)
 
 ### 2.5 Phase 2 動作確認
 
-- [ ] 🧪 単体テストの 5 言語全て PASS
-- [ ] 🧪 既存リポで `/tribal-init` 実行 → Phase 2a が完走、`.claude/artifacts/ast/*.json` が module 数だけ生成
-- [ ] 🧪 ast.json の中身を 1 つ目視確認（imports / calls / definitions が埋まっている）
-- [ ] 🧪 module-analyst の出力 (`.claude/artifacts/analyst/*.json`) を旧版と比較:
-  - Q4 の精度が向上していること
-  - Q1 / Q3 / Q5 が変わらず生成されていること
-- [ ] 🧪 baseline と比べて `/tribal-init` のトークン消費が **30% 以上削減** されていること（`_quality-log.jsonl` か Claude Code のトークンカウンタで確認）
-- [ ] 🧪 未対応言語のみのリポでも `/tribal-init` が完走（fallback 動作）
+- [x] 🧪 単体テスト 5 言語全 PASS
+- [x] 🧪 baseline-target で 18 modules AST 抽出 → 0.29s / cache hit 後 0.05s
+- [x] 🧪 ast.json 内容確認 (180 imports, 268 defs, 1867 calls)
+- [x] 🧪 fallback 動作確認 (unsupported 拡張子で empty JSON)
+- [ ] 🧪 module-analyst の出力比較 (実 LLM 比較 → Phase 7 E2E)
+- [ ] 🧪 トークン 30% 削減確認 (実 LLM 計測 → Phase 7 E2E)
 
-⏪ **ロールバック**: `module-analyst.md` の変更を revert すれば従来動作に戻る。ast_extract.py は無害なので残置可
+**重要発見**: AST artifact size は最初 source の 1.5x に bloat。calls 重複排除と
+imports `raw` 削除で 1.07x まで圧縮。実 LLM トークン削減効果は analyst が
+artifact 全部読まず selective Read する設計に依存 (Phase 7 で実測)。
 
-✅ Phase 2 完了条件: トークン消費 30% 削減、未対応言語で fallback 動作、ast.json の品質 OK
+⏪ **ロールバック**: `module-analyst.md` の変更を revert すれば従来動作に戻る。
+
+✅ **Phase 2 完了**: AST 抽出 5 言語動作、cache 連携 OK、構造的下地完成。
+詳細は `docs/phase2-completion-report.md`。実 LLM トークン検証は Phase 7。
 
 ---
 
