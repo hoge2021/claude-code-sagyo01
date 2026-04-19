@@ -1,0 +1,21 @@
+# Tribal Knowledge Mapper
+.claude/artifacts/analyst/*.json
+.claude/artifacts/critic/*.json
+.claude/artifacts/tests/*.json
+.claude/critic-workspace/
+.claude/.session-state/
+
+# v2 Cache layer (Phase 1)
+.claude/cache/**/*.json
+.claude/cache/**/*.tmp
+
+# Python bytecode
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Keep directory structure
+!.claude/artifacts/analyst/.gitkeep
+!.claude/artifacts/critic/.gitkeep
+!.claude/artifacts/tests/.gitkeep
+!.claude/cache/.gitkeep

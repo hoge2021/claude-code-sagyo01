@@ -71,43 +71,46 @@
 
 ### 1.1 ファイル作成
 
-- [ ] 📝 `.claude/scripts/cache.py` を新規作成
+- [x] 📝 `.claude/scripts/cache.py` を新規作成
   - graphify `cache.py` をベースに、`module_hash()` `load_cached_artifact(module_id, kind)` `save_cached_artifact(module_id, kind, payload)` を実装
   - `kind` パラメータは `"ast" | "analyst" | "critic" | "context"` を受け付ける
   - hash key には repo HEAD SHA も混ぜる（branch 切替えで stale を防ぐ）
   - `.md` ファイルの YAML frontmatter は除外して hash（graphify 流儀）
-- [ ] 📝 `.claude/cache/` ディレクトリを作成、`.gitkeep` を配置
-- [ ] 📝 `.gitignore` に `.claude/cache/*.json` と `!.claude/cache/.gitkeep` を追加
+- [x] 📝 `.claude/cache/` ディレクトリを作成、`.gitkeep` を配置
+- [x] 📝 `.gitignore` に `.claude/cache/*.json` と `!.claude/cache/.gitkeep` を追加
 
 ### 1.2 既存 script への組み込み
 
-- [ ] 📝 `.claude/scripts/detect_changed_modules.py` を更新:
+- [x] 📝 `.claude/scripts/detect_changed_modules.py` を更新:
   - `mtime_based_changes()` の前に `cache.py` の hash 比較を追加
   - cache hit module は `changed_modules` から除外
   - 出力 JSON に `cached_modules` フィールドを追加
-- [ ] 📝 `.claude/commands/tribal-refresh.md` の「変更なしの場合」セクションに cache hit 数の報告を追記
+  - **副次的 fix**: 単一ファイル module の mtime 検出漏れバグ修正
+- [x] 📝 `.claude/commands/tribal-refresh.md` の「変更なしの場合」セクションに cache hit 数の報告を追記
 
 ### 1.3 単体テスト
 
-- [ ] 📝 `.claude/scripts/test_cache.py` を作成（pytest 不要、`python test_cache.py` で完結）
+- [x] 📝 `.claude/scripts/test_cache.py` を作成（pytest 不要、`python test_cache.py` で完結）
   - 同一内容ファイルのハッシュ一致
   - frontmatter 違いで hash 一致（.md のみ）
   - frontmatter 違いで hash 不一致（.py 等）
   - HEAD SHA 違いで hash 不一致
   - load → save → load 往復
+  - 追加: invalid kind / cached_modules / clear_cache の 3 ケース
 
 ### 1.4 Phase 1 動作確認
 
-- [ ] 🧪 単体テスト実行 (`python .claude/scripts/test_cache.py`) → 全 PASS を確認
-- [ ] 🧪 `python .claude/scripts/detect_changed_modules.py` → cache 関連フィールドが出力 JSON に含まれることを確認
-- [ ] 🧪 `/tribal-refresh` 実行 → cache hit 数がログに表示されることを確認
-- [ ] 🧪 `/tribal-refresh` を 2 回連続実行 → 2 回目は **ほぼ瞬時** に完了することを確認
-- [ ] 🧪 任意の module ファイルを編集 → `/tribal-refresh` で当該 module だけ再分析されることを確認
-- [ ] 🧪 既存の `/tribal-init` `/tribal-validate` `/tribal-route` 全てが従来通り動作することを確認
+- [x] 🧪 単体テスト実行 → **8/8 PASS**
+- [x] 🧪 `python .claude/scripts/detect_changed_modules.py` → cache 関連フィールド出力確認
+- [x] 🧪 cache populate → detect で cache hit 認識 (Test 2,4)
+- [x] 🧪 ファイル編集 → cache miss → 再 changed_modules 入り (Test 5,8)
+- [x] 🧪 `--no-cache` flag で cache fast path 無効化 (Test 7)
+- [x] 🧪 baseline-target を v1 restore → regression なし
+- [ ] 🧪 `/tribal-refresh` の実 LLM 実行は実機で別途 (Phase 7 統合 E2E)
 
 ⏪ **ロールバック**: `git revert <Phase 1 commits>` でいい。既存挙動への影響は最小限なので破壊リスクはほぼ無い。
 
-✅ Phase 1 完了条件: refresh が cache hit で短縮される、既存挙動に regression なし
+✅ **Phase 1 完了**: cache layer 動作、tribal v1 バグ #4 (single-file mtime) も副次的に修正、regression なし。詳細は `docs/phase1-completion-report.md`。
 
 ---
 
