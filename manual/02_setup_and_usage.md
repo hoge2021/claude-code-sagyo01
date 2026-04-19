@@ -40,91 +40,126 @@
 
 ## 2. インストール手順
 
-### 2.1 パッケージインストール
+**推奨フロー**: 配布用 tarball `tribal-v2.tar.gz` をダウンロードして解凍、必要ファイルを
+あなたのプロジェクト直下に移動するだけ。Python パッケージ (pip) は **MCP server を
+使う時だけ** インストールすれば OK です。
+
+### 2.1 tarball のダウンロード
 
 ```bash
-# GitHub から直接インストール (PyPI 公開待ちのため)
-pip install "tribal-knowledge-mapper @ git+https://github.com/hoge2021/claude-code-sagyo01.git@v2.0.0-rc1#subdirectory=tribal-v2"
+# リリース版を直接ダウンロード (推奨)
+curl -L -o tribal-v2.tar.gz \
+  https://github.com/hoge2021/claude-code-sagyo01/raw/v2.0.0-rc1/dist/tribal-v2.tar.gz
 
-# または local clone して editable install (開発向け)
-git clone https://github.com/hoge2021/claude-code-sagyo01.git
-cd claude-code-sagyo01/tribal-v2
-pip install -e .
+# もしくは clone 済みなら直接 copy
+cp /path/to/claude-code-sagyo01/dist/tribal-v2.tar.gz ./
 ```
 
-インストール成功確認:
+ファイルサイズは約 100 KB、96 ファイル (skill/agent/scripts/schemas/commands + Python package)。
+
+### 2.2 解凍 + プロジェクトへの配置
+
+あなたのプロジェクトのルート (git repo 推奨) に tarball を置いて実行:
+
 ```bash
+cd /path/to/your-project
+
+# 1. 解凍 (tribal-v2/ というディレクトリが作られる)
+tar -xzf tribal-v2.tar.gz
+
+# 2. 必要ファイルをプロジェクト直下に移動
+mv tribal-v2/.claude ./.claude                    # 13 agents + 12 scripts + 10 schemas 等
+mv tribal-v2/.github/workflows ./.github/workflows 2>/dev/null || \
+  mkdir -p .github && mv tribal-v2/.github/workflows ./.github/
+mv tribal-v2/CLAUDE.md ./CLAUDE.md                # 既存なら手動マージ推奨
+mv tribal-v2/tribal ./tribal                      # Python package (MCP/CLI 用、任意)
+mv tribal-v2/pyproject.toml ./pyproject.toml      # 既存なら手動マージ
+[ ! -f .gitignore ] && mv tribal-v2/.gitignore ./.gitignore || \
+  cat tribal-v2/.gitignore >> .gitignore          # 既存があれば追記
+
+# 3. テンプレート跡地をクリーンアップ
+rm -rf tribal-v2 tribal-v2.tar.gz
+
+# 4. バージョン記録
+echo "2.0.0-rc1" > .claude/.tribal_version
+```
+
+### 2.3 配置確認
+
+```bash
+# 必須ファイルが揃っているか
+ls .claude/scripts/       # 12 Python scripts
+ls .claude/agents/        # 13 .md files
+ls .claude/skills/        # tribal-mapper/, tribal-router/
+ls .claude/commands/      # 4 slash commands
+ls .claude/schemas/       # 10 JSON schemas
+
+# settings.json の hook 3 重化確認
+python3 -c "
+import json
+d = json.load(open('.claude/settings.json'))
+print('hooks:', list(d['hooks'].keys()))
+"
+# → hooks: ['PostToolUse', 'UserPromptSubmit', 'PreToolUse']
+```
+
+### 2.4 MCP server を使う場合のみ: Python パッケージ install
+
+MCP server や `tribal` CLI コマンドを使いたい場合のみ、以下を追加実行:
+
+```bash
+# プロジェクト直下の Python パッケージを editable install
+pip install -e .
+
+# 成功確認
 tribal --version
 # → tribal 2.0.0-rc1
 ```
 
-### 2.2 optional dependencies
+`tribal` CLI を使わず、skill / slash command / hook だけで運用する場合はこのステップは **不要**
+(tarball 展開だけで Claude Code から動作)。
 
-用途に応じて追加 install:
+### 2.5 optional dependencies (用途に応じて追加)
 
 ```bash
-# AST 抽出 (Python/TS/Go/Rust/Java の決定論的 deps 抽出)
-pip install "tribal-knowledge-mapper[ast]"
+# AST 抽出 (Python/TS/Go/Rust/Java の決定論的 deps 抽出、Phase 2a で必須)
+pip install -e ".[ast]"
 
 # Leiden clustering (Python 3.12 以下のみ、なければ Louvain fallback)
-pip install "tribal-knowledge-mapper[leiden]"
+pip install -e ".[leiden]"
 
 # MCP server
-pip install "tribal-knowledge-mapper[mcp]"
+pip install -e ".[mcp]"
 
-# schema validation (jsonschema)
-pip install "tribal-knowledge-mapper[schema]"
+# schema validation (jsonschema、CI で使用)
+pip install -e ".[schema]"
 
 # すべて
-pip install "tribal-knowledge-mapper[all]"
+pip install -e ".[all]"
 ```
 
-### 2.3 プロジェクトへの配置
+### 2.6 他プラットフォームへの配置 (Codex / OpenCode 用、任意)
 
-あなたのプロジェクトディレクトリ (git repo 推奨) に移動して:
+tarball 展開直後の構成は Claude Code 向け。Codex / OpenCode で使うには `tribal` CLI で
+後処理:
 
 ```bash
-cd /path/to/your-project
-tribal install --platform claude --target .
-```
-
-実行結果の例:
-```
-Installing tribal v2.0.0-rc1 for platform=claude at /path/to/your-project
-  ✓ copied .claude/skills/
-  ✓ copied .claude/agents/
-  ✓ copied .claude/scripts/
-  ✓ copied .claude/schemas/
-  ✓ copied .claude/commands/
-  ✓ wrote .claude/settings.json
-  ✓ created CLAUDE.md with Tribal section
-  ✓ stamped .tribal_version = 2.0.0-rc1
-Done. Try /tribal-init to build the knowledge graph.
-```
-
-これで `.claude/` ディレクトリ一式と `CLAUDE.md` が配置されました。
-
-### 2.4 他プラットフォームへの配置 (任意)
-
-```bash
-# OpenAI Codex 用
+# Python パッケージを install 済みなら
 tribal install --platform codex --target .
-# → AGENTS.md + .codex/hooks.json
+# → AGENTS.md + .codex/hooks.json が追加配置
 
-# OpenCode 用
 tribal install --platform opencode --target .
-# → AGENTS.md + .opencode/plugins/tribal.js
+# → AGENTS.md + .opencode/plugins/tribal.js が追加配置
 ```
 
-1 つのプロジェクトで複数 platform を同時に install 可能 (Claude Code + Codex 混在チーム向け)。
+pip install なしで手動配置したい場合は、`.claude/` 内容を見て AGENTS.md を手作成 →
+`docs/MIGRATION_v1_to_v2.md` のセクション「MCP Server (任意)」を参考に。
 
-### 2.5 インストール確認 (smoke test)
+1 つのプロジェクトで複数 platform 同時 install 可 (Claude Code + Codex 混在チーム向け)。
+
+### 2.7 インストール確認 (smoke test)
 
 ```bash
-# Python パッケージ側 (import できるか)
-python3 -c "import tribal; print(tribal.__version__)"
-# → 2.0.0-rc1
-
 # 配置物側 (必要ファイルが揃っているか)
 ls .claude/scripts/
 # cache.py  ast_extract.py  cluster.py  god_nodes.py  benchmark.py
