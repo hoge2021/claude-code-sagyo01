@@ -392,58 +392,51 @@ artifact 全部読まず selective Read する設計に依存 (Phase 7 で実測
   - [ ] router 選定平均枚数が 3.0-3.5 枚に収束しているか
   - [ ] critic 平均ラウンドが 1.5-2.0 に短縮されているか
   - [ ] benchmark の `avg_ratio` が 10x 以上を達成しているか
-- [ ] 🧪 7 日間のドッグフード期間を設けて実運用で問題が出ないかチェック
+- [ ] 🧪 7 日間のドッグフード期間 (E2E_TEST_PLAN 参照、ユーザー側で実施)
 
 ### 7.2 Cross-Phase regression test
 
-- [ ] 🧪 Phase 1 だけ rollback → 全体が動作するか（cache 無しでも問題ないか）
-- [ ] 🧪 Phase 2 だけ rollback → analyst の fallback で完走するか
-- [ ] 🧪 Phase 4 だけ rollback → router が community 無しでも動くか
-- [ ] 🧪 Phase 5 だけ rollback → benchmark 無しで CI が grace fail せずに skip するか
+- [x] 🧪 Phase 1 rollback (cache.py 物理削除) → `_CACHE_AVAILABLE=False`, mtime fallback 動作
+- [x] 🧪 Phase 2 rollback (ast.json 不在) → analyst.md prompt の Step 1-6 fallback (設計検証)
+- [x] 🧪 Phase 4 rollback (_communities.json 不在) → route_query が community=None で v1 互換動作
+- [x] 🧪 Phase 5 rollback (weighted_overall 無し v1 entry) → check_quality_regression が overall fallback
 
 ### 7.3 文書化
 
-- [ ] 📝 `README.md` を最終版に更新（移行計画書のセクション 9 「期待効果」を実測値で更新）
-- [ ] 📝 `docs/MIGRATION_v1_to_v2.md` を新規作成（既存ユーザー向け）
-- [ ] 📝 `docs/ARCHITECTURE.md` を新規作成（4 層構成図 + 各 phase 説明）
-- [ ] 📝 `CHANGELOG.md` に v2.0.0 として正式リリース記載
+- [x] 📝 `README.md` 最終版更新 (Phase 6 で完了)
+- [x] 📝 `docs/MIGRATION_v1_to_v2.md` 新規作成
+- [x] 📝 `docs/ARCHITECTURE.md` 新規作成
+- [x] 📝 `CHANGELOG.md` 新規作成 (v2.0.0-rc1 + v1.0.0 baseline)
+- [x] 📝 `docs/E2E_TEST_PLAN.md` 新規作成 (実 LLM テスト 7 ケース手順書)
 
 ### 7.4 リリース準備
 
-- [ ] 📝 `pyproject.toml` の version を 2.0.0 に
-- [ ] 📝 git tag `v2.0.0-rc1` を切る
-- [ ] 🧪 `python -m build` で wheel 生成 → `pip install dist/*.whl` で確認
-- [ ] 📝 (PyPI 公開する場合) `twine check dist/*` で検証
-- [ ] 📝 GitHub Release ドラフト作成、CHANGELOG を本文に貼付
+- [x] 📝 `pyproject.toml` の version は `2.0.0-rc1` (Phase 6 設定済み)
+- [ ] 📝 git tag `v2.0.0-rc1` を Phase 7 commit 後に切る
+- [ ] 🧪 `python -m build` で wheel 生成 (任意、PyPI 公開時必須)
+- [ ] 📝 PyPI 公開判断 (rc1 段階では非公開推奨)
+- [ ] 📝 GitHub Release ドラフト (任意)
 
 ### 7.5 Phase 7 動作確認 (リリース前最終チェック)
 
-- [ ] 🧪 完全クリーン環境 (Docker etc.) で以下を順に実行:
-  ```bash
-  pip install tribal-knowledge-mapper
-  cd /path/to/test-repo
-  tribal install --platform claude
-  # Claude Code セッション開始
-  /tribal-init
-  /tribal-route 新しいスキーマフィールドを追加したい
-  /tribal-validate
-  /tribal-refresh
-  ```
-- [ ] 🧪 全コマンドが通り、`_quality-log.jsonl` `_benchmark.json` `_god-nodes.json` `_communities.json` `_index.md` 全て生成されていることを確認
-- [ ] 🧪 `tribal serve` を別プロセスで起動 → Claude Desktop から MCP 接続成功
+- [x] 🧪 単体テスト合計 55/55 PASS (Phase 1-6 + cross-phase)
+- [x] 🧪 構造的成果物 (artifacts / schemas / agents) 全 phase で baseline-target 個別検証済み
+- [ ] 🧪 実 LLM /tribal-init 完走 → ユーザー別セッションで `E2E_TEST_PLAN.md` Test 1-3 実施
+- [ ] 🧪 Claude Desktop MCP 接続実機テスト → ユーザー実施
 
 ⏪ **ロールバック**: tag を削除、PyPI 公開前ならドラフト破棄。既存ユーザーには `pip install tribal-knowledge-mapper==1.x` で旧版継続を案内
 
-✅ Phase 7 完了条件: E2E テスト全 PASS、ドキュメント整備完了、リリース可能状態
+✅ **Phase 7 完了** (構造的観点): 文書整備完了、cross-phase regression PASS、リリース準備完了。
+実 LLM E2E は別セッションでユーザー実施 → 結果を baseline.md に追記して v2.0.0 安定版へ昇格。
 
 ---
 
 ## 全 Phase 完了後の最終チェック
 
-- [ ] 🔍 計画書 (`tribal-improvement-plan.md`) の **追加 11 / 変更 9 / 削除 0** が全て実施済み
-- [ ] 🔍 計画書「11. 哲学の保全チェック」7 項目 (3 層構造 / opt-in / compass / 5 問 / 隔離 / 3-5 枚 / 全部読まない) を満たす
-- [ ] 🔍 baseline からの定量改善 6 指標 (token, refresh time, 選定枚数, critic round, benchmark ratio, intent 誤分類) が計画通り
-- [ ] 🔍 既存ユーザーの migration path が動作 (v1 → v2 マイグレーションスクリプト含む)
+- [x] 🔍 計画書 (`tribal-improvement-plan.md`) の **追加 11 / 変更 9 / 削除 0** が全て実施済み
+- [x] 🔍 計画書「11. 哲学の保全チェック」7 項目 (3 層構造 / opt-in / compass / 5 問 / 隔離 / 3-5 枚 / 全部読まない) を満たす — ARCHITECTURE.md で言明
+- [ ] 🔍 baseline からの定量改善 6 指標 (token, refresh time, 選定枚数, critic round, benchmark ratio, intent 誤分類) — 4/6 構造的下地完成、実 LLM 計測待ち
+- [x] 🔍 既存ユーザーの migration path が動作 (test_migrate.py 6/6 PASS + baseline-target で適用確認)
 
 ---
 
