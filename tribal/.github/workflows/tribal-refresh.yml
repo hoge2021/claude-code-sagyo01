@@ -1,0 +1,168 @@
+# Tribal Knowledge Mapper - automated refresh
+#
+# Runs every 14 days, detects changed modules, regenerates affected contexts,
+# and opens a PR. Fails the build if quality regresses beyond threshold.
+#
+# IMPORTANT (B3): The exact `claude` CLI flag for headless/non-interactive
+# invocation may differ between Claude Code versions. Run `claude --help`
+# locally to verify before relying on this workflow. Common variants:
+#   - claude -p "<prompt>"           (older / current "print" mode)
+#   - claude --print "<prompt>"      (long form)
+#   - claude --headless "<prompt>"   (some builds)
+# Adjust the `Run tribal refresh` step accordingly.
+
+name: tribal-knowledge-refresh
+
+on:
+  schedule:
+    # JST 02:00 every 14 days
+    - cron: "0 17 */14 * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode (refresh|validate|init)"
+        required: false
+        default: "refresh"
+      since_sha:
+        description: "Override baseline SHA for change detection"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout (full history for git diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Verify CLI flags (informational)
+        run: |
+          claude --version || true
+          claude --help | head -30 || true
+
+      - name: Optional MCP setup
+        run: |
+          if [ -x ./scripts/setup-serena.sh ]; then
+            ./scripts/setup-serena.sh
+          fi
+
+      - name: Detect changed modules (preview)
+        id: detect
+        run: |
+          if [ -f .claude/context/_coverage.json ]; then
+            python .claude/scripts/detect_changed_modules.py \
+              ${{ inputs.since_sha && format('--since-sha {0}', inputs.since_sha) || '' }} \
+              | tee /tmp/changed.json
+            count=$(jq '.changed_modules | length' /tmp/changed.json)
+            echo "changed_count=$count" >> "$GITHUB_OUTPUT"
+          else
+            echo "No coverage file found - first run, will execute init mode"
+            echo "changed_count=-1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run tribal mapper
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          MODE="${{ inputs.mode || 'refresh' }}"
+          if [ "${{ steps.detect.outputs.changed_count }}" = "-1" ]; then
+            MODE="init"
+          fi
+
+          # NOTE: Adjust flag based on your Claude Code version
+          # (see "Verify CLI flags" step output)
+          claude -p "Execute /tribal-${MODE}.
+
+          Requirements:
+          - Use only changed modules (per detect_changed_modules.py output)
+          - Re-run critic on all contexts in 20% sample if mode=validate
+          - Update _coverage.json with last_success_sha
+          - Append all critic results to _quality-log.jsonl
+          - Report total/changed/failed counts at the end" \
+            --dangerously-skip-permissions
+
+      - name: Validate generated artifacts
+        run: |
+          # Schema-check generated JSON files (non-fatal warnings)
+          pip install jsonschema --quiet
+          python -c "
+          import json, sys, glob
+          from pathlib import Path
+          from jsonschema import validate, ValidationError
+
+          checks = [
+              ('.claude/context/_coverage.json', '.claude/schemas/coverage.schema.json'),
+              ('.claude/context/_dep-graph.json', '.claude/schemas/dep-graph.schema.json'),
+              ('.claude/context/_routing-table.json', '.claude/schemas/routing-table.schema.json'),
+          ]
+          fails = 0
+          for data_p, schema_p in checks:
+              if not Path(data_p).exists():
+                  print(f'SKIP (missing): {data_p}')
+                  continue
+              try:
+                  validate(json.loads(Path(data_p).read_text()), json.loads(Path(schema_p).read_text()))
+                  print(f'OK: {data_p}')
+              except ValidationError as e:
+                  print(f'FAIL: {data_p}: {e.message}')
+                  fails += 1
+          sys.exit(1 if fails else 0)
+          "
+
+      - name: Quality regression gate
+        run: |
+          python .claude/scripts/check_quality_regression.py \
+            --baseline-ref origin/main \
+            --threshold 0.3 \
+            --per-file-threshold 0.5 \
+            --min-absolute 3.5
+
+      - name: Prune old artifacts (D6 retention)
+        run: |
+          # Keep only the latest analyst/critic JSON; tests are kept as-is for trend
+          # Artifacts are gitignored anyway, but this prevents accidental commits
+          find .claude/artifacts/analyst -name "*.json" -mtime +30 -delete || true
+          find .claude/artifacts/critic -name "*.json" -mtime +30 -delete || true
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: tribal/auto-refresh-${{ github.run_number }}
+          commit-message: "tribal: auto refresh (run #${{ github.run_number }})"
+          title: "tribal: auto refresh #${{ github.run_number }}"
+          body: |
+            ## Automated Tribal Knowledge Refresh
+
+            Generated by `.github/workflows/tribal-refresh.yml` on
+            ${{ github.event.schedule || 'manual dispatch' }}.
+
+            **Reviewer checklist:**
+            - [ ] No unexpected path changes
+            - [ ] No quality score regression (CI gate already passed)
+            - [ ] Routing table changes look intentional
+            - [ ] No `manual_review_required` items left unaddressed
+          labels: |
+            tribal-knowledge
+            automated
+          add-paths: |
+            .claude/context/

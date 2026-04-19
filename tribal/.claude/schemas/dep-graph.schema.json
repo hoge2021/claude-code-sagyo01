@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cross-Module Dependency Graph",
+  "type": "object",
+  "required": ["generated_at", "nodes", "edges", "ripple_index", "stats"],
+  "properties": {
+    "generated_at": {"type": "string", "format": "date-time"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "repo", "lang"],
+        "properties": {
+          "id": {"type": "string"},
+          "repo": {"type": "string"},
+          "lang": {"type": "string"},
+          "context_file": {"type": "string"}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind"],
+        "properties": {
+          "from": {"type": "string"},
+          "to": {"type": "string"},
+          "kind": {
+            "type": "string",
+            "enum": ["import", "config", "runtime", "serialization", "build", "schema"]
+          },
+          "fragility": {"type": "string"},
+          "evidence": {"type": "string"}
+        }
+      }
+    },
+    "ripple_index": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"},
+        "maxItems": 10
+      }
+    },
+    "stats": {
+      "type": "object",
+      "required": ["node_count", "edge_count", "avg_ripple_size", "max_ripple_size"],
+      "properties": {
+        "node_count": {"type": "integer", "minimum": 0},
+        "edge_count": {"type": "integer", "minimum": 0},
+        "avg_ripple_size": {"type": "number", "minimum": 0},
+        "max_ripple_size": {"type": "integer", "minimum": 0},
+        "max_ripple_module": {"type": "string"}
+      }
+    }
+  }
+}
