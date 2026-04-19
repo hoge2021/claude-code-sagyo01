@@ -28,10 +28,20 @@
           "to": {"type": "string"},
           "kind": {
             "type": "string",
-            "enum": ["import", "config", "runtime", "serialization", "build", "schema"]
+            "enum": ["import", "config", "runtime", "serialization", "build", "schema",
+                     "semantically_similar_to", "rationale_for"]
           },
           "fragility": {"type": "string"},
-          "evidence": {"type": "string"}
+          "evidence": {"type": "string"},
+          "confidence": {
+            "type": "string",
+            "enum": ["EXTRACTED", "INFERRED", "AMBIGUOUS"],
+            "description": "Tribal v2: edge 由来の確度 (graphify からの借用)"
+          },
+          "confidence_score": {
+            "type": "number", "minimum": 0.0, "maximum": 1.0,
+            "description": "Tribal v2: EXTRACTED=1.0 / INFERRED=0.6-0.9 / AMBIGUOUS=0.1-0.3"
+          }
         }
       }
     },

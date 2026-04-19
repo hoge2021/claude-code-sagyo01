@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "God Nodes (Tribal v2 Phase 4)",
+  "type": "object",
+  "required": ["generated_at", "global_top_n", "per_community", "recommended_primaries", "stats"],
+  "properties": {
+    "generated_at": {"type": "string", "format": "date-time"},
+    "global_top_n": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["module", "degree"],
+        "properties": {
+          "module": {"type": "string"},
+          "degree": {"type": "integer", "minimum": 0},
+          "community": {"type": ["integer", "null"]},
+          "context_file": {"type": "string"}
+        }
+      }
+    },
+    "per_community": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["module", "degree"],
+          "properties": {
+            "module": {"type": "string"},
+            "degree": {"type": "integer", "minimum": 0},
+            "context_file": {"type": "string"}
+          }
+        }
+      }
+    },
+    "recommended_primaries": {
+      "type": "object",
+      "description": "intent name → 推薦 context file 配列。routing-upgrader が判定者として採否",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "stats": {
+      "type": "object",
+      "required": ["node_count", "max_degree", "avg_degree"],
+      "properties": {
+        "node_count": {"type": "integer", "minimum": 0},
+        "max_degree": {"type": "integer", "minimum": 0},
+        "avg_degree": {"type": "number", "minimum": 0}
+      }
+    }
+  }
+}

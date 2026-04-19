@@ -39,9 +39,33 @@
             "type": "integer",
             "minimum": 3,
             "maximum": 5
+          },
+          "community_hint": {
+            "type": ["integer", "null"],
+            "description": "Tribal v2: この intent が主にヒットする community ID (router の 2 段階選定用)"
+          },
+          "god_node_recommended": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Tribal v2: god-node-detector 推薦を routing-upgrader が採用したもの"
+          },
+          "rejected_recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "context": {"type": "string"},
+                "reason": {"type": "string"}
+              }
+            },
+            "description": "Tribal v2: god-node 推薦のうち却下したもの (理由付き)"
           }
         }
       }
+    },
+    "wiki_index": {
+      "type": "string",
+      "description": "Tribal v2: intent 不明時の fallback ナビゲーション entry (.claude/context/_index.md)"
     },
     "fallback": {
       "type": "object",

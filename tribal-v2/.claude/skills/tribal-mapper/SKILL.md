@@ -100,6 +100,14 @@ description: |
 1. `dependency-indexer` を起動
 2. 全 analyst JSON を集約し `.claude/context/_dep-graph.json` を生成
 3. `ripple_index` を必ず計算する（router の選定に必須）
+4. **Tribal v2**: 全 edge に `confidence` `confidence_score` 必須付与
+5. **Tribal v2**: `semantically_similar_to` / `rationale_for` edge も生成
+
+### Phase 5.5 (Tribal v2): Community Detection
+
+1. `community-clusterer` を起動 (Bash で `cluster.py` を呼ぶだけ、LLM 不要)
+2. 出力: `.claude/context/_communities.json`
+3. method (leiden/louvain) と stats を確認、isolate 0 件含めて全 module カバレッジ確認
 
 ### Phase 6: Coverage Audit
 
@@ -108,11 +116,43 @@ description: |
 3. 出力: `.claude/context/_coverage.json`
 4. missing_modules が 0 件でなければ Phase 2 に戻る（最大 3 回反復）
 
-### Phase 7: Routing Build
+### Phase 6.5 (Tribal v2): God Node Detection
+
+1. `god-node-detector` を起動 (Bash で `god_nodes.py` を呼ぶだけ、LLM 不要)
+2. 出力: `.claude/context/_god-nodes.json`
+3. global_top_n + per_community + recommended_primaries を確認
+
+### Phase 7: Routing Build (Tribal v2: 判定者モード)
 
 1. `routing-upgrader` を起動
 2. seed intent カテゴリ（feature-add, bug-fix, refactor, schema-change, ops-investigation, validation-change, codegen-change, test-add）から始める
-3. 出力: `.claude/context/_routing-table.json`
+3. **Tribal v2**: `_god-nodes.json` の `recommended_primaries` を入力に取り、判定者として
+   採否 (採用 → `god_node_recommended`、却下 → `rejected_recommendations` + 理由)
+4. **Tribal v2**: 各 intent に `community_hint` を設定
+5. 出力: `.claude/context/_routing-table.json`
+6. **Tribal v2 (Phase 7 末尾)**: `_index.md` を生成 (community 一覧 wiki entry)
+
+`_index.md` の構造:
+```markdown
+# Repository Knowledge Index
+
+## Communities
+
+### Community 0: <label> (cohesion: 0.6, 5 modules)
+- god_node: graphify/watch (degree 8)
+- members: ...
+- intents: feature-add, ops-investigation
+- jump: [→ /tribal-route feature-add]
+
+### Community 1: ...
+
+## Intents
+
+| intent | primary | community |
+|--------|---------|-----------|
+| schema-change | graphify__validate.md | C3 |
+...
+```
 
 ### Phase 8: Regression Test
 

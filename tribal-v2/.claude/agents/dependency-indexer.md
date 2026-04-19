@@ -57,9 +57,11 @@ model: sonnet
     {
       "from": "<module>",
       "to": "<module>",
-      "kind": "import|config|runtime|serialization|build|schema",
+      "kind": "import|config|runtime|serialization|build|schema|semantically_similar_to|rationale_for",
       "fragility": "<壊れる条件>",
-      "evidence": "<file:line>"
+      "evidence": "<file:line>",
+      "confidence": "EXTRACTED|INFERRED|AMBIGUOUS",
+      "confidence_score": 1.0
     }
   ],
   "ripple_index": {
@@ -85,9 +87,30 @@ model: sonnet
 - `/tribal-refresh` で変更検出した module の **ripple 上にある module** も再分析対象にできる
 - 「6000 トークンの探索を 200 トークンのグラフ参照に置換」（Meta 論文）
 
+## Tribal v2: 拡張 edge 種別
+
+graphify からの借用で 2 種類の edge を新規生成:
+
+### `semantically_similar_to`
+
+「呼び出してないが概念的に近い」module ペアを検出。実装は軽量に:
+
+1. 各 analyst JSON の Q1 + Q3 ラベルから **キーワード集合** を作る (TF-IDF か Jaccard)
+2. ペアワイズ類似度を計算、**0.7 以上**で edge 生成
+3. confidence = INFERRED, confidence_score は 0.6-0.9 (類似度に応じて)
+
+### `rationale_for`
+
+Q5 (commit message / PR description 由来の why) を node 化し、対象 module への
+edge を張る。category=commit_message のものを優先。
+
+- confidence = EXTRACTED (commit hash で根拠あり), confidence_score = 1.0
+
 ## 不変則
 
 - ripple は **最大 2 段**（transitive 全展開すると候補爆発）
 - 自己ループは除外（X → X は意味がない）
 - 同じ from/to の edge が複数 kind で存在する場合は別 edge として保持
 - 統計情報（stats）を必ず計算する。CI の品質ゲートで使う
+- **Tribal v2**: `confidence` と `confidence_score` は全 edge に必須付与
+  (graphify と同じ規範)

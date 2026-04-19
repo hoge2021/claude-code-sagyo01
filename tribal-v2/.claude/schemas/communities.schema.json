@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Communities (Tribal v2 Phase 4)",
+  "type": "object",
+  "required": ["generated_at", "method", "communities", "node_to_community", "stats"],
+  "properties": {
+    "generated_at": {"type": "string", "format": "date-time"},
+    "method": {"type": "string", "enum": ["leiden", "louvain", "no-edges", "empty"]},
+    "communities": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9]+$": {
+          "type": "object",
+          "required": ["members", "cohesion", "size"],
+          "properties": {
+            "members": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+            "cohesion": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+            "size": {"type": "integer", "minimum": 1},
+            "label": {"type": ["string", "null"]}
+          }
+        }
+      }
+    },
+    "node_to_community": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "stats": {
+      "type": "object",
+      "required": ["count", "node_count", "edge_count"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 0},
+        "avg_size": {"type": "number"},
+        "max_size": {"type": "integer"},
+        "min_size": {"type": "integer"},
+        "node_count": {"type": "integer"},
+        "edge_count": {"type": "integer"}
+      }
+    }
+  }
+}

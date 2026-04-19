@@ -27,47 +27,84 @@ description: |
 
 これら 2 ファイル以外を最初から読み込んではいけません。選定後にロードします。
 
-## 手順
+## 必ず読み込むファイル (Tribal v2 拡張)
 
-### Step 1: Intent 分類
+- `.claude/context/_routing-table.json`
+- `.claude/context/_dep-graph.json`
+- `.claude/context/_communities.json`     ★v2 で追加
+- `.claude/context/_god-nodes.json`       ★v2 で追加 (community_hint 解決時に必要)
+
+## 手順 (Tribal v2: 2 段階選定 + Wiki Fallback)
+
+### Step 1: Intent 分類 (v1 同様)
 
 `_routing-table.json` の各 intent について:
 
 1. `keywords` のいずれかがユーザータスクにマッチするか
 2. `anti_keywords` がマッチしていないか（マッチしていたら除外）
+3. score = (keywords matched) - 2 × (anti_keywords matched)
 
 最もスコアの高い intent を採用。tie の場合は両方を候補として扱う。
 
-### Step 2: Primary contexts 取得
+### Step 2 (NEW): Community 解決
 
-採用した intent の `primary_contexts` を候補に入れる（1〜3 枚）。
+採用した intent の `community_hint` フィールドを確認:
+- **community_hint が指定されている**: その community の god_node を `_god-nodes.json` の
+  `per_community[<id>]` から取得し、優先候補に追加
+- **community_hint が null**: Step 3 へそのまま進む (v1 互換動作)
 
-### Step 3: Ripple expansion
+### Step 3: Primary contexts 取得
 
-`_dep-graph.json` の `ripple_index` を使い、primary に挙がった module から波及する module の context を `secondary_contexts` の中で重複しているもののみ追加。
+intent の `primary_contexts` (1-3 枚) を候補に入れる。Step 2 で追加した god_node 候補と
+重複していれば dedup。
 
-**ripple の transitive 展開は禁止**。1 段だけ。see-also の連鎖追跡もしない。
+### Step 4: Ripple expansion (v2: community-aware)
 
-### Step 4: 上限カット
+`_dep-graph.json` の `ripple_index` を使い、primary 由来の module から波及する module の
+context を追加。**ただし v2 では同 community 内 module を優先**:
 
-合計が 5 枚を超えたら、以下の優先度で落とす:
+1. primary の community を特定
+2. ripple 候補のうち同 community を最優先 (cohesion で連動性が高い)
+3. その後、別 community の ripple 候補
+4. **transitive 展開は禁止** (1 段だけ)
 
-1. `secondary_contexts` のうち ripple_index で参照されていないもの
+### Step 5: 上限カット (v1 同様)
+
+合計が 5 枚を超えたら:
+1. `secondary_contexts` のうち ripple_index で参照されていないものを落とす
 2. ripple 距離が最も遠いもの
-3. 最後に参照された日時が古いもの
+3. 別 community のもの (community_hint と異なる)
+4. 最後に参照された日時が古いもの
 
 最終的に 3〜5 枚に収める。
 
-### Step 5: ロードと提示
+### Step 6 (NEW): Wiki Fallback
+
+intent score が全て 0 (キーワードヒットなし) または明らかな match 不在の場合:
+
+1. `_routing-table.json` の `wiki_index` を読む (= `.claude/context/_index.md`)
+2. ユーザーに以下を提示:
+   ```
+   intent を分類できませんでした。以下のうちどれが近いですか?
+     1. <community-0 label> (5 modules)
+     2. <community-1 label> (5 modules)
+     3. <community-2 label> (3 modules)
+     ...
+     - skip: ナビなしで全 context を見る (推奨しない)
+     - manual: ".claude/context/_index.md" を Read してナビ
+   ```
+3. ユーザー選択を待ってから対応 community の god_node を Step 3 に投入
+
+### Step 7: ロードと提示
 
 選定した context を `Read` tool でロードし、ユーザーに以下を提示:
 
 ```
-タスクを「<intent>」と分類しました。
+タスクを「<intent>」と分類しました (community: <hint>)。
 以下の context をロードします:
-  - .claude/context/<file1>.md  (primary: <理由>)
-  - .claude/context/<file2>.md  (primary: <理由>)
-  - .claude/context/<file3>.md  (ripple from <module>: <理由>)
+  - .claude/context/<file1>.md  (primary, god_node)
+  - .claude/context/<file2>.md  (primary, intent ヒット)
+  - .claude/context/<file3>.md  (ripple from <module>, 同 community)
 よろしいですか? (Yes / 追加 / 削除 / Skip routing)
 ```
 

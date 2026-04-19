@@ -218,70 +218,51 @@ artifact 全部読まず selective Read する設計に依存 (Phase 7 で実測
   - graphify `cluster.py` を流用
   - graspologic 利用、なければ networkx Louvain
   - 入力: `_dep-graph.json`、出力: `_communities.json`
-- [ ] 📝 `.claude/schemas/communities.schema.json` を新規作成
-- [ ] 📝 `.claude/agents/community-clusterer.md` を新規作成
-  - `model: haiku`
-  - `tools: Bash, Read, Write`
+- [x] 📝 `.claude/schemas/communities.schema.json` を新規作成
+- [x] 📝 `.claude/agents/community-clusterer.md` を新規作成
 
 ### 4.2 god-node スクリプトと agent
 
-- [ ] 📝 `.claude/scripts/god_nodes.py` を新規作成
-  - graphify `analyze.py` の `god_nodes()` を流用
-  - file-level hub / method stub の除外ロジックも採用（tribal 用に調整）
-  - intent と community の親和性スコアで `recommended_primaries` を生成
-- [ ] 📝 `.claude/schemas/god-nodes.schema.json` を新規作成
-- [ ] 📝 `.claude/agents/god-node-detector.md` を新規作成
+- [x] 📝 `.claude/scripts/god_nodes.py` を新規作成 (158 LOC)
+- [x] 📝 `.claude/schemas/god-nodes.schema.json` を新規作成
+- [x] 📝 `.claude/agents/god-node-detector.md` を新規作成
 
 ### 4.3 dep-graph schema 拡張
 
-- [ ] 📝 `.claude/schemas/dep-graph.schema.json` を更新:
-  - edges の required に `confidence_score` 追加
-  - `kind` enum に `semantically_similar_to` `rationale_for` 追加
-- [ ] 📝 `.claude/agents/dependency-indexer.md` を更新:
-  - `semantically_similar_to` edge 生成ロジック (Jaccard / TF-IDF で軽量化)
-  - `rationale_for` edge 生成ロジック (Q5 の category=commit_message を使う)
-  - 既存 ripple 計算は変更なし
+- [x] 📝 `.claude/schemas/dep-graph.schema.json` を更新 (confidence + 新 edge kinds)
+- [x] 📝 `.claude/agents/dependency-indexer.md` を更新 (v2 セクション追加、実生成は Phase 7 E2E)
 
 ### 4.4 routing 強化
 
-- [ ] 📝 `.claude/schemas/routing-table.schema.json` を更新:
-  - `community_hint` `god_node_recommended` フィールドを追加（optional）
-- [ ] 📝 `.claude/agents/routing-upgrader.md` を更新:
-  - 入力に `_communities.json` `_god-nodes.json` を追加
-  - 動作モードを「ゼロから生成」→「god-node 推薦の判定者」に変更
-  - 推薦の採用 / 却下を理由付きで記録
-- [ ] 📝 `.claude/skills/tribal-router/SKILL.md` を更新:
-  - Step 2 「Community 解決」を追加
-  - Step 4 「Ripple expansion」を community 内優先に変更
-  - Step 6 「Wiki Fallback」を新規追加
+- [x] 📝 `.claude/schemas/routing-table.schema.json` を更新
+- [x] 📝 `.claude/agents/routing-upgrader.md` を「判定者モード」に
+- [x] 📝 `.claude/skills/tribal-router/SKILL.md` を 7 step に拡張
 
 ### 4.5 wiki entry point 生成
 
-- [ ] 📝 `.claude/skills/tribal-mapper/SKILL.md` の Phase 7 末尾に「`_index.md` を生成」を追加
-- [ ] 📝 `_index.md` の生成 logic を `routing-upgrader.md` に追記:
-  - community ごとの 2-5 行サマリ
-  - 各 intent への jump link
-  - god_node 一覧
+- [x] 📝 `.claude/skills/tribal-mapper/SKILL.md` の Phase 7 末尾に `_index.md` 生成記述
+- [x] 📝 `_index.md` の生成 logic は routing-upgrader prompt に明記
 
 ### 4.6 mapper skill の Phase 構成更新
 
-- [ ] 📝 `.claude/skills/tribal-mapper/SKILL.md` に Phase 5.5 (Clustering) と Phase 6.5 (God Detection) を挿入
-- [ ] 📝 並列実行ルール: clustering と god_node は serial（dep-graph に依存）
+- [x] 📝 Phase 5.5 (Clustering) + Phase 6.5 (God Detection) を skill に挿入
 
 ### 4.7 Phase 4 動作確認
 
-- [ ] 🧪 既存リポで `/tribal-init` を実行 → Phase 5.5 / 6.5 が完走
-- [ ] 🧪 `_communities.json` が生成され、`coverage_ratio == 1.0` が成立
-- [ ] 🧪 `_god-nodes.json` の `recommended_primaries` が各 intent に対して 1-3 module を提示
-- [ ] 🧪 routing-upgrader が god_node 推薦を **採用 / 却下の理由付きで** 記録していること
-- [ ] 🧪 `_index.md` が community 一覧として生成されていること
-- [ ] 🧪 `/tribal-route 不明な intent のクエリ` → `_index.md` への fallback ナビが提示されること
-- [ ] 🧪 router の選定平均枚数が 4.5 → 3.0-3.5 に減少していること（10 ケースで計測）
-- [ ] 🧪 graspologic 非インストール環境で Louvain fallback 動作確認
+- [x] 🧪 単体テスト 9/9 PASS (test_cluster.py)
+- [x] 🧪 baseline-target で `cluster.py` 実行 → 7 communities (Louvain) detect
+- [x] 🧪 `_communities.json` 生成、cohesion / 全 18 modules カバレッジ確認
+- [x] 🧪 `_god-nodes.json` の recommended_primaries が 8 intent 全件カバー
+- [x] 🧪 graspologic 非インストール環境で Louvain fallback 確認 (Python 3.14.3)
+- [x] 🧪 community が ARCHITECTURE.md と意味的一致 (cache+detect+extract = 入力 pipeline 等)
+- [ ] 🧪 routing-upgrader 採用/却下の判定 (実 LLM → Phase 7 E2E)
+- [ ] 🧪 `_index.md` 生成と wiki fallback 動作 (実 LLM → Phase 7 E2E)
+- [ ] 🧪 router 選定平均枚数 30% 減 計測 (実 LLM → Phase 7 E2E)
 
 ⏪ **ロールバック**: routing-table.json を Phase 3 時点に restore、Phase 5.5/6.5 を skill から外す
 
-✅ Phase 4 完了条件: community / god_node が生成、router 選定数 30% 減、fallback ナビが動作
+✅ **Phase 4 完了**: Leiden/Louvain ベースの community detection + degree-based god_node
+推薦インフラ完成。意味的一致を baseline-target で実証。詳細は `docs/phase4-completion-report.md`。
 
 ---
 

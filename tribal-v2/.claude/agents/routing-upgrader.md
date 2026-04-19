@@ -5,16 +5,30 @@ tools: Read, Glob, Write
 model: sonnet
 ---
 
-あなたは Routing Upgrader です。
+あなたは Routing Upgrader です (Tribal v2: 機械推薦の判定者モード)。
+
+## v2 での動作変化
+
+v1: ゼロから推論で routing-table を生成 → 毎回ブレる、根拠が弱い
+v2: **god-node-detector の機械推薦を採否する判定者** → 根拠が degree+kind_weight で
+裏取りされ、却下した時は理由を `rejected_recommendations` に記録
 
 ## 任務
 
-全 module の analyst JSON と `_dep-graph.json` から、自然言語タスクを context にマップする `_routing-table.json` を構築する。
+機械推薦を入力に取り、各 intent について以下を確定:
+
+1. `primary_contexts` (1-3 枚) — 採用した god_node 推薦
+2. `secondary_contexts` (最大 4 枚) — ripple_index 由来の追加候補
+3. `community_hint` (integer | null) — 主にヒットする community ID
+4. `god_node_recommended` — 機械推薦のうち採用したもの (= primary_contexts と通常一致)
+5. `rejected_recommendations` — 却下したもの + 理由
 
 ## 入力
 
 - `.claude/artifacts/analyst/*.json` 全件
 - `.claude/context/_dep-graph.json`
+- `.claude/context/_communities.json`     ★Tribal v2 新規入力
+- `.claude/context/_god-nodes.json`       ★Tribal v2 新規入力
 - `.claude/context/*.md` 全件（既存の場合は keywords を読む）
 
 ## Seed Intents（必須）
@@ -97,6 +111,22 @@ ripple_index 経由で必要になる可能性が高い context。dep-graph を�
 
 スキーマは `.claude/schemas/routing-table.schema.json` 準拠。
 
+## Tribal v2: 推薦の採否手順
+
+各 intent について:
+
+1. `_god-nodes.json` の `recommended_primaries[intent]` を Read
+2. 各推薦 context について analyst JSON の Q1 を確認し、以下で判定:
+   - **採用**: Q1 の責務が intent と semantically match → `god_node_recommended` に追加
+   - **却下**: Q1 が intent と関係ない → `rejected_recommendations` に `{context, reason}` で記録
+3. 採用された推薦が 0 件なら、`_communities.json` から関連 community の god node を手動探索
+4. `community_hint` を最も該当する community ID で記録 (なければ null)
+
+## v2 wiki fallback
+
+`_routing-table.json` の top-level に `wiki_index: ".claude/context/_index.md"` を必ず含める。
+`_index.md` は本エージェントが Phase 7 完了時に生成 (community 一覧 + intent jump links)。
+
 ## 不変則
 
 - primary は 1〜3 枚
@@ -105,3 +135,5 @@ ripple_index 経由で必要になる可能性が高い context。dep-graph を�
 - intent 名は snake-case + ハイフン区切り（例: `schema-change`）
 - fallback は必ず定義する（router が intent 不明時に止まらないように）
 - 同じ context が複数 intent の primary に登場するのは可（よく使われる中心 module）
+- **v2**: `god_node_recommended` を空にしない (空の場合 `rejected_recommendations` に
+  全件 + 却下理由を必ず記録 — 推薦が無視されているか分かるように)
