@@ -56,6 +56,7 @@ AI 自体に **予め精読させて** 「罠データベース」を作らせ�
 
 2026 年 4 月の Meta engineering blog
 「How Meta Used AI to Map Tribal Knowledge in Large-Scale Data Pipelines」
+https://engineering.fb.com/2026/04/06/developer-tools/how-meta-used-ai-to-map-tribal-knowledge-in-large-scale-data-pipelines/
 を Claude Code 上に再現したのが v1。
 
 特徴:
@@ -66,9 +67,9 @@ AI 自体に **予め精読させて** 「罠データベース」を作らせ�
 
 ### 3.2 v2 の進化: graphify からの編み込み
 
-[graphifyy](https://github.com/safishamsi/graphify) という別プロジェクト (知識グラフ構築 skill) から、以下の要素を **tribal の哲学を壊さずに** 編み込みました:
+別プロジェクト (知識グラフ構築 skill) から、以下の要素を **tribal の哲学を壊さずに** 編み込みました:
 
-| graphify 由来要素 | tribal v2 での役割 |
+| 由来要素 | tribal v2 での役割 |
 |---|---|
 | tree-sitter AST 抽出 | 決定論的な imports/calls/defs 抽出 → analyst の LLM トークン 50-60% 削減 |
 | SHA256 cache | 変更のない module は LLM 呼出しゼロで完了 |
@@ -233,7 +234,7 @@ branch 切り替えで HEAD SHA が変わると自動 invalidate されるので
 
 **状況**: 新人が join、コードベースが 100+ module で「どこから触っていいか分からない」。
 
-**v1 の使い方**:
+**v2 の使い方**:
 1. プロジェクトマネージャーが `/tribal-init` で初回構築 (一度だけ)
 2. 新人が質問: 「認証周りを触るならどこを見るべき?」
 3. Claude Code が `/tribal-route` → `auth-config`, `session-validator`, `rate-limiter` の
@@ -246,7 +247,7 @@ branch 切り替えで HEAD SHA が変わると自動 invalidate されるので
 
 **状況**: データスキーマを変更したい。どの service に影響するか不明。
 
-**v1 の使い方**:
+**v2 の使い方**:
 1. `/tribal-route データスキーマを変更したい`
 2. intent 分類 → `schema-change`
 3. community C3 (build + validate) から primary context、ripple_index 経由で
@@ -259,7 +260,7 @@ branch 切り替えで HEAD SHA が変わると自動 invalidate されるので
 
 **状況**: 本番で API latency が急上昇。原因不明で原因究明時間が惜しい。
 
-**v1 の使い方**:
+**v2 の使い方**:
 1. `/tribal-route レイテンシが上がった、原因調査`
 2. intent 分類 → `ops-investigation` (anti_keywords で `add` を排除、誤分類しない)
 3. community (serve + watch) の hub module = god_node `watch` を primary 提示
@@ -271,7 +272,7 @@ branch 切り替えで HEAD SHA が変わると自動 invalidate されるので
 
 **状況**: チームで ChatGPT / Claude の使用が増え、トークン予算がキツい。
 
-**v1 の使い方**:
+**v2 の使い方**:
 - router 経由で毎タスク 3-5 枚のみロード → **平均 10-30x のトークン削減** (corpus 規模依存)
 - benchmark.py が削減率を毎回自動計測、Slack / CI に投稿
 
@@ -282,7 +283,7 @@ branch 切り替えで HEAD SHA が変わると自動 invalidate されるので
 **状況**: Claude Code 派と Codex 派が社内に混在、「認証ロジックについて聞きたい」が
 毎回別々に調べて非効率。
 
-**v1 の使い方**:
+**v2 の使い方**:
 1. `tribal install --platform codex` で Codex 側にも AGENTS.md 展開
 2. MCP server 起動 (`tribal serve --mcp`) して Claude Desktop / Codex Desktop から接続
 3. 両者とも `@tribal route_query "認証ロジックを修正"` で同じ 3-5 context を取得
@@ -293,7 +294,7 @@ branch 切り替えで HEAD SHA が変わると自動 invalidate されるので
 
 **状況**: 月 1 のエンジニア退職で知識が失われる不安。
 
-**v1 の使い方**:
+**v2 の使い方**:
 - GitHub Actions が 14 日毎に `/tribal-refresh` を自動実行
 - 変更モジュールのみ再分析、cache hit で変化なし module は skip
 - 品質回帰ゲート (avg_score -0.3 以上劣化で CI fail)
